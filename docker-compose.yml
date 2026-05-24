@@ -1,0 +1,591 @@
+services:
+  # =============================================================================
+  # DATABASE & CACHE - Shared Infrastructure
+  # =============================================================================
+  
+  # PostgreSQL - Shared by .NET and Python services
+  postgres:
+    image: postgres:15-alpine
+    container_name: rag-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: rag_system
+      POSTGRES_HOST_AUTH_METHOD: password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    # SECURITY: Port NOT exposed - only accessible within Docker network
+    # Uncomment for debugging: ports: ["5432:5432"]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d rag_system"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - rag-network
+
+  # Redis - Shared cache for .NET and Python
+  redis:
+    image: redis:7-alpine
+    container_name: rag-redis
+    # SECURITY: Port NOT exposed - only accessible within Docker network
+    # Uncomment for debugging: ports: ["6379:6379"]
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - rag-network
+
+  # =============================================================================
+  # API GATEWAY - .NET Orchestration Layer
+  # =============================================================================
+  
+  dotnet-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - ENVIRONMENT=${ENVIRONMENT:-Production}
+        - CONFIGURATION=${BUILD_CONFIG:-Release}
+    container_name: rag-dotnet-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ENVIRONMENT:-Production}
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=rag_system;Username=postgres;Password=postgres
+      - ConnectionStrings__Redis=redis:6379,abortConnect=false
+      - JwtSettings__SecretKey=${JWT_SECRET_KEY:-your-super-secret-key-min-32-characters-long-change-in-production}
+      - JwtSettings__Issuer=RagSystem
+      - JwtSettings__Audience=RagSystemUsers
+      - OAuth__Google__ClientId=${GOOGLE_OAUTH_CLIENT_ID:-}
+      - OAuth__Google__ClientSecret=${GOOGLE_OAUTH_CLIENT_SECRET:-}
+      - OAuth__GitHub__ClientId=${GITHUB_OAUTH_CLIENT_ID:-}
+      - OAuth__GitHub__ClientSecret=${GITHUB_OAUTH_CLIENT_SECRET:-}
+      - OAuth__RedirectBaseUrl=${FRONTEND_PUBLIC_URL:-https://cyberguard.lakshaycodes.dev}
+      - PythonServices__PdfService__BaseUrl=http://pdf-service:8001
+      - PythonServices__EmbeddingsService__BaseUrl=http://embeddings-service:8002
+      - PythonServices__SearchService__BaseUrl=http://search-service:8003
+      - PythonServices__AgenticRAGService__BaseUrl=http://agentic-rag-service:8004
+      - PythonServices__AdvisoryService__BaseUrl=http://advisory-service:8005
+    expose:
+      - "8000"
+    volumes:
+      - ./data/user_uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - rag-network
+
+  # =============================================================================
+  # PYTHON MICROSERVICES - ML/AI Processing Layer
+  # =============================================================================
+
+  # PDF Processing Service
+  pdf-service:
+    build:
+      context: .
+      dockerfile: ./services/pdf_service/Dockerfile
+    container_name: rag-pdf-service
+    environment:
+      - POSTGRES_DATABASE_URL=postgresql+psycopg2://postgres:postgres@postgres:5432/rag_system
+      - REDIS__HOST=redis
+      - REDIS__PORT=6379
+      - SERVICE_PORT=8001
+      - SERVICE_NAME=pdf-processing
+    # SECURITY: Port NOT exposed - only .NET API gateway can access this
+    # expose: ["8001"]  # Available only within Docker network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - rag-network
+
+  # Embeddings Service
+  embeddings-service:
+    build:
+      context: .
+      dockerfile: ./services/embeddings_service/Dockerfile
+    container_name: rag-embeddings-service
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DATABASE_URL=postgresql+psycopg2://postgres:postgres@postgres:5432/rag_system
+      - REDIS__HOST=redis
+      - REDIS__PORT=6379
+      - SERVICE_PORT=8002
+      - SERVICE_NAME=embeddings-generation
+      - JINA_API_KEY=${JINA_API_KEY}
+    # SECURITY: Port NOT exposed - only .NET API gateway can access this
+    # expose: ["8002"]  # Available only within Docker network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - rag-network
+
+  # Search Service
+  search-service:
+    build:
+      context: .
+      dockerfile: ./services/search_service/Dockerfile
+    container_name: rag-search-service
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DATABASE_URL=postgresql+psycopg2://postgres:postgres@postgres:5432/rag_system
+      - OPENSEARCH_HOST=http://opensearch:9200
+      - OPENSEARCH__HOST=http://opensearch:9200
+      - JINA_API_KEY=${JINA_API_KEY}
+      - REDIS__HOST=redis
+      - REDIS__PORT=6379
+      - SERVICE_PORT=8003
+      - SERVICE_NAME=search
+    # SECURITY: Port NOT exposed - only .NET API gateway can access this
+    # expose: ["8003"]  # Available only within Docker network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - rag-network
+
+  # Agentic RAG Service
+  agentic-rag-service:
+    build:
+      context: .
+      dockerfile: ./services/agentic_rag_service/Dockerfile
+    container_name: rag-agentic-service
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DATABASE_URL=postgresql+psycopg2://postgres:postgres@postgres:5432/rag_system
+      - OPENSEARCH_HOST=http://opensearch:9200
+      - OPENSEARCH__HOST=http://opensearch:9200
+      - OLLAMA_HOST=http://ollama:11434
+      - LANGFUSE_BASE_URL=http://langfuse-web:3000
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-pk-lf-00000000-0000-0000-0000-000000000000}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-sk-lf-00000000-0000-0000-0000-000000000000}
+      - LANGFUSE_ENABLED=true
+      - LANGFUSE_DEBUG=false
+      - JINA_API_KEY=${JINA_API_KEY}
+      - REDIS__HOST=redis
+      - REDIS__PORT=6379
+      - SERVICE_PORT=8004
+      - SERVICE_NAME=agentic-rag
+    # SECURITY: Port NOT exposed - only .NET API gateway can access this
+    # expose: ["8004"]  # Available only within Docker network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+      redis:
+        condition: service_healthy
+      langfuse-web:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - rag-network
+
+  # GitHub Security Advisories Service
+  advisory-service:
+    build:
+      context: .
+      dockerfile: ./services/advisory_service/Dockerfile
+    container_name: rag-advisory-service
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8005", "--workers", "2"]
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DATABASE_URL=postgresql+psycopg2://postgres:postgres@postgres:5432/rag_system
+      - OPENSEARCH_HOST=http://opensearch:9200
+      - OPENSEARCH__HOST=http://opensearch:9200
+      - GITHUB_API_URL=https://api.github.com/graphql
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB__API_TOKEN=${GITHUB_TOKEN}
+      - SERVICE_PORT=8005
+      - SERVICE_NAME=advisory
+      - LANGFUSE_BASE_URL=http://langfuse-web:3000
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-pk-lf-00000000-0000-0000-0000-000000000000}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-sk-lf-00000000-0000-0000-0000-000000000000}
+      - LANGFUSE_ENABLED=true
+      - LANGFUSE_DEBUG=false
+    # SECURITY: Port NOT exposed - only .NET API gateway can access this
+    # expose: ["8005"]  # Available only within Docker network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8005/api/v1/advisories/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - rag-network
+
+  # =============================================================================
+  # AI/ML INFRASTRUCTURE
+  # =============================================================================
+
+  # OpenSearch - Vector and BM25 search
+  opensearch:
+    image: opensearchproject/opensearch:2.19.0
+    container_name: rag-opensearch
+    environment:
+      - discovery.type=single-node
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+      - DISABLE_SECURITY_PLUGIN=true
+      - bootstrap.memory_lock=true
+    # SECURITY: Ports NOT exposed - only accessible within Docker network
+    # Uncomment for debugging: ports: ["9200:9200", "9600:9600"]
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - rag-network
+
+  # OpenSearch Dashboards - UI for OpenSearch
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:2.19.0
+    container_name: rag-opensearch-dashboards
+    expose:
+      - "5601"
+    environment:
+      - OPENSEARCH_HOSTS=http://opensearch:9200
+      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - rag-network
+
+  # Ollama - Local LLM inference
+  ollama:
+    image: ollama/ollama:0.11.2
+    container_name: rag-ollama
+    # SECURITY: Port NOT exposed - only accessible within Docker network
+    # Uncomment for debugging: ports: ["11434:11434"]
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - rag-network
+
+  # =============================================================================
+  # OBSERVABILITY - Langfuse Stack (Optional but Recommended)
+  # =============================================================================
+
+  # Langfuse Web - LLM Observability UI
+  langfuse-web:
+    image: docker.io/langfuse/langfuse:3
+    container_name: rag-langfuse-web
+    restart: unless-stopped
+    depends_on:
+      langfuse-postgres:
+        condition: service_healthy
+      langfuse-redis:
+        condition: service_healthy
+      langfuse-minio:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    expose:
+      - "3000"
+    environment:
+      NEXTAUTH_URL: ${LANGFUSE_NEXTAUTH_URL:-http://localhost:3001}
+      NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET:-changeme-nextauth-secret}
+      DATABASE_URL: postgresql://langfuse:langfuse@langfuse-postgres:5432/langfuse
+      SALT: ${LANGFUSE_SALT:-changeme-salt}
+      ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY:-0000000000000000000000000000000000000000000000000000000000000000}
+      TELEMETRY_ENABLED: "false"
+      LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: ${LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES:-false}
+      CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:9000
+      CLICKHOUSE_URL: http://clickhouse:8123
+      CLICKHOUSE_USER: langfuse
+      CLICKHOUSE_PASSWORD: langfuse
+      CLICKHOUSE_CLUSTER_ENABLED: "false"
+      LANGFUSE_USE_AZURE_BLOB: "false"
+      LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_EVENT_UPLOAD_REGION: auto
+      LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: ${LANGFUSE_MINIO_ACCESS_KEY:-minioadmin}
+      LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_MINIO_SECRET_KEY:-minioadmin}
+      LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://langfuse-minio:9000
+      LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+      LANGFUSE_S3_EVENT_UPLOAD_PREFIX: events/
+      LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_MEDIA_UPLOAD_REGION: auto
+      LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID: ${LANGFUSE_MINIO_ACCESS_KEY:-minioadmin}
+      LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_MINIO_SECRET_KEY:-minioadmin}
+      LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: ${LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT:-http://langfuse-minio:9000}
+      LANGFUSE_INIT_ORG_NAME: "RAG Organization"
+      LANGFUSE_INIT_PROJECT_ID: "agentic-rag"
+      LANGFUSE_INIT_PROJECT_NAME: "Agentic RAG"
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-pk-lf-00000000-0000-0000-0000-000000000000}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-sk-lf-00000000-0000-0000-0000-000000000000}
+      LANGFUSE_INIT_USER_EMAIL: "admin@example.com"
+      LANGFUSE_INIT_USER_NAME: "Admin User"
+      LANGFUSE_INIT_USER_PASSWORD: "admin123"
+      HOSTNAME: "0.0.0.0"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:3000/api/public/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 180s
+    networks:
+      - rag-network
+
+  # Langfuse Worker - Background processing
+  langfuse-worker:
+    image: docker.io/langfuse/langfuse-worker:3
+    container_name: rag-langfuse-worker
+    restart: unless-stopped
+    depends_on:
+      langfuse-postgres:
+        condition: service_healthy
+      langfuse-redis:
+        condition: service_healthy
+      langfuse-minio:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    expose:
+      - "3030"
+    environment:
+      NEXTAUTH_URL: ${LANGFUSE_NEXTAUTH_URL:-http://localhost:3001}
+      DATABASE_URL: postgresql://langfuse:langfuse@langfuse-postgres:5432/langfuse
+      SALT: ${LANGFUSE_SALT:-changeme-salt}
+      ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY:-0000000000000000000000000000000000000000000000000000000000000000}
+      TELEMETRY_ENABLED: "false"
+      LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: ${LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES:-false}
+      CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:9000
+      CLICKHOUSE_URL: http://clickhouse:8123
+      CLICKHOUSE_USER: langfuse
+      CLICKHOUSE_PASSWORD: langfuse
+      CLICKHOUSE_CLUSTER_ENABLED: "false"
+      LANGFUSE_USE_AZURE_BLOB: "false"
+      LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_EVENT_UPLOAD_REGION: auto
+      LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: ${LANGFUSE_MINIO_ACCESS_KEY:-minioadmin}
+      LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_MINIO_SECRET_KEY:-minioadmin}
+      LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://langfuse-minio:9000
+      LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+      LANGFUSE_S3_EVENT_UPLOAD_PREFIX: events/
+      LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_MEDIA_UPLOAD_REGION: auto
+      LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID: ${LANGFUSE_MINIO_ACCESS_KEY:-minioadmin}
+      LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_MINIO_SECRET_KEY:-minioadmin}
+      LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: ${LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT:-http://langfuse-minio:9000}
+      LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE: "true"
+      LANGFUSE_S3_MEDIA_UPLOAD_PREFIX: media/
+      LANGFUSE_S3_BATCH_EXPORT_ENABLED: ${LANGFUSE_S3_BATCH_EXPORT_ENABLED:-false}
+      LANGFUSE_S3_BATCH_EXPORT_BUCKET: langfuse
+      LANGFUSE_S3_BATCH_EXPORT_PREFIX: exports/
+      LANGFUSE_S3_BATCH_EXPORT_REGION: auto
+      LANGFUSE_S3_BATCH_EXPORT_ENDPOINT: http://langfuse-minio:9000
+      LANGFUSE_S3_BATCH_EXPORT_EXTERNAL_ENDPOINT: ${LANGFUSE_S3_BATCH_EXPORT_EXTERNAL_ENDPOINT:-http://langfuse-minio:9000}
+      LANGFUSE_S3_BATCH_EXPORT_ACCESS_KEY_ID: ${LANGFUSE_MINIO_ACCESS_KEY:-minioadmin}
+      LANGFUSE_S3_BATCH_EXPORT_SECRET_ACCESS_KEY: ${LANGFUSE_MINIO_SECRET_KEY:-minioadmin}
+      LANGFUSE_S3_BATCH_EXPORT_FORCE_PATH_STYLE: "true"
+      REDIS_HOST: langfuse-redis
+      REDIS_PORT: 6379
+      REDIS_AUTH: ${LANGFUSE_REDIS_PASSWORD:-langfuse_redis_password}
+      REDIS_TLS_ENABLED: "false"
+    networks:
+      - rag-network
+
+  # Langfuse PostgreSQL - Separate DB for Langfuse
+  langfuse-postgres:
+    image: postgres:17
+    container_name: rag-langfuse-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=langfuse
+      - POSTGRES_PASSWORD=langfuse
+      - POSTGRES_DB=langfuse
+      - POSTGRES_HOST_AUTH_METHOD=password
+      - TZ=UTC
+      - PGTZ=UTC
+    # SECURITY: Port NOT exposed - only accessible within Docker network
+    # Uncomment for debugging: ports: ["5433:5432"]
+    volumes:
+      - langfuse_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U langfuse -d langfuse"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    networks:
+      - rag-network
+
+  # Langfuse Redis - Separate Redis for Langfuse
+  langfuse-redis:
+    image: docker.io/redis:7
+    container_name: rag-langfuse-redis
+    restart: unless-stopped
+    command: --requirepass ${LANGFUSE_REDIS_PASSWORD:-langfuse_redis_password}
+    # SECURITY: Port NOT exposed - only accessible within Docker network
+    # Uncomment for debugging: ports: ["6380:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${LANGFUSE_REDIS_PASSWORD:-langfuse_redis_password}", "ping"]
+      interval: 3s
+      timeout: 10s
+      retries: 10
+    networks:
+      - rag-network
+
+  # Langfuse MinIO - S3-compatible storage
+  langfuse-minio:
+    image: docker.io/minio/minio
+    container_name: rag-langfuse-minio
+    restart: unless-stopped
+    entrypoint: sh
+    command: -c 'mkdir -p /data/langfuse && minio server --address ":9000" --console-address ":9001" /data'
+    environment:
+      - MINIO_ROOT_USER=${LANGFUSE_MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${LANGFUSE_MINIO_SECRET_KEY:-minioadmin}
+    expose:
+      - "9000"
+      - "9001"
+    volumes:
+      - langfuse_minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    networks:
+      - rag-network
+
+  # ClickHouse - Analytics database for Langfuse
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8-alpine
+    container_name: rag-clickhouse
+    environment:
+      - CLICKHOUSE_DB=langfuse
+      - CLICKHOUSE_USER=langfuse
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+      - CLICKHOUSE_PASSWORD=langfuse
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--user", "langfuse", "--password", "langfuse", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - rag-network
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  opensearch_data:
+    driver: local
+  ollama_data:
+    driver: local
+  langfuse_postgres_data:
+    driver: local
+  langfuse_minio_data:
+    driver: local
+  clickhouse_data:
+    driver: local
+
+# =============================================================================
+# NETWORK
+# =============================================================================
+# Network is created manually before first deploy:
+#   docker network create rag-network
+networks:
+  rag-network:
+    external: true

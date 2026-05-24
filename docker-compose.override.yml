@@ -1,0 +1,34 @@
+# Development overrides — automatically merged by docker compose on local machines.
+# This file is NOT used in production (only docker-compose.yml is deployed).
+#
+# 1. Overrides the external network declaration so docker compose creates the
+#    network automatically instead of requiring: docker network create rag-network
+# 2. Exposes service ports to the host for local development and testing.
+
+services:
+  dotnet-api:
+    ports:
+      - "8000:8000"
+
+  langfuse-web:
+    ports:
+      - "3001:3000"
+
+  langfuse-worker:
+    ports:
+      - "3030:3030"
+
+  opensearch-dashboards:
+    ports:
+      - "5601:5601"
+
+  langfuse-minio:
+    ports:
+      - "9090:9000"
+      - "9091:9001"
+
+networks:
+  rag-network:
+    external: false
+    driver: bridge
+    name: rag-network
