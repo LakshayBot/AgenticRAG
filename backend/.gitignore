@@ -1,0 +1,17 @@
+# .NET Backend
+/backend/bin/
+/backend/obj/
+/backend/**/*.user
+/backend/**/*.suo
+/backend/.vs/
+/backend/.vscode/
+/backend/uploads/
+/backend/uploads_dev/
+/backend/.env
+/backend/**/.DS_Store
+
+# EF Core Migrations
+/backend/**/Migrations/*.Designer.cs
+
+# Rider
+/backend/.idea/
