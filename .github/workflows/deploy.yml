@@ -11,9 +11,9 @@ concurrency:
 
 jobs:
   deploy:
-    name: Zero-Downtime Deploy
+    name: Zero-Downtime Rolling Deploy
     runs-on: ubuntu-latest
-    # Frontend is on Cloudflare Pages (auto-deploy on push) — no frontend job here.
+    # Frontend is on Cloudflare Pages (auto-deploy on push to main) — no frontend job here.
 
     steps:
       # ── 1. Connect to private server via Tailscale ──────────────────────────
@@ -24,73 +24,22 @@ jobs:
           oauth-secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
           tags: tag:ci
 
-      # ── 2. Deploy via SSH ────────────────────────────────────────────────────
-      - name: Deploy on production server
+      # ── 2. Rolling deploy via SSH ────────────────────────────────────────────
+      - name: Rolling deploy on production server
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.PROD_HOST }}        # Tailscale IP of your server
+          host: ${{ secrets.PROD_HOST }}      # Tailscale IP of your server
           username: ${{ secrets.PROD_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
           port: 22
-          command_timeout: 20m
+          command_timeout: 30m
           script: |
             set -euo pipefail
+            cd "${{ secrets.PROD_REPO_DIR }}"
 
-            REPO_DIR="${{ secrets.PROD_REPO_DIR }}"   # e.g. /home/ubuntu/AgenticRAG
-            cd "$REPO_DIR"
+            # Pass DEPLOY_ENV so deploy.sh skips the interactive prompt,
+            # and optionally pass SLACK_WEBHOOK for notifications.
+            export DEPLOY_ENV=production
+            export SLACK_WEBHOOK="${SLACK_WEBHOOK:-}"
 
-            echo "=== Pulling latest code ==="
-            git fetch origin main
-            git reset --hard origin/main
-
-            echo "=== Ensuring rag-network exists ==="
-            docker network inspect rag-network >/dev/null 2>&1 || docker network create rag-network
-
-            echo "=== Building images (parallel) ==="
-            docker compose -f docker-compose.yml build --parallel
-
-            echo "=== Rolling zero-downtime restart ==="
-            # Restart stateless services one by one to avoid full outage.
-            # Data services (postgres, redis, opensearch, ollama) are left running
-            # unless their image changed — Docker Compose handles this automatically
-            # with `up -d` (only recreates containers whose config/image changed).
-            docker compose -f docker-compose.yml up -d --remove-orphans
-
-            echo "=== Waiting for critical services to be healthy ==="
-            wait_healthy() {
-              local name="$1" timeout="${2:-120}" elapsed=0
-              printf "  Waiting for %s" "$name"
-              while true; do
-                status=$(docker inspect --format='{{.State.Health.Status}}' "$name" 2>/dev/null || echo "missing")
-                case "$status" in
-                  healthy) echo " OK"; return 0 ;;
-                  unhealthy) echo " UNHEALTHY"; docker logs --tail 30 "$name"; return 1 ;;
-                esac
-                if [[ "$elapsed" -ge "$timeout" ]]; then
-                  echo " TIMEOUT (status=$status)"; return 1
-                fi
-                printf "."; sleep 5; elapsed=$((elapsed + 5))
-              done
-            }
-
-            FAILED=0
-            for svc in rag-postgres rag-redis rag-opensearch rag-ollama rag-dotnet-api rag-agentic-service; do
-              wait_healthy "$svc" 120 || FAILED=$((FAILED + 1))
-            done
-
-            if [[ "$FAILED" -gt 0 ]]; then
-              echo "ERROR: $FAILED service(s) unhealthy after deploy" >&2
-              exit 1
-            fi
-
-            echo "=== Ensuring Ollama model is present ==="
-            OLLAMA_MODEL="${OLLAMA_MODEL:-llama3.2:1b}"
-            docker exec rag-ollama ollama list | grep -q "$OLLAMA_MODEL" \
-              || docker exec rag-ollama ollama pull "$OLLAMA_MODEL"
-
-            echo "=== OpenSearch index setup ==="
-            docker exec rag-agentic-service \
-              python /app/scripts/setup_opensearch_index.py 2>&1 \
-              || echo "WARN: index setup non-zero (may already exist)"
-
-            echo "=== Deploy complete ==="
+            bash deploy.sh
