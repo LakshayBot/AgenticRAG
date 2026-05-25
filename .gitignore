@@ -142,10 +142,13 @@ backend/**/bin/
 backend/**/obj/
 
 # Fork legacy root src/ (old FastAPI monolith, not the microservices)
-src/
+# src/ is the SHARED Python library used by all microservices — it belongs in git
 
 # stitch design artifacts
 frontend/stitch_*/
+
+# Legacy page files (pre-migration React pages, kept for reference but not deployed)
+frontend/src/_legacy_pages/
 
 # Claude Code specific files
 .claude_code/
