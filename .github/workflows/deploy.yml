@@ -1,45 +1,96 @@
-name: Deploy to Production
+# ==============================================================================
+# CyberGuard AI — Production Deploy Workflow
+#
+# Triggers on every push to `main` and supports manual dispatch.
+# Connects to the private self-hosted server via Tailscale VPN, then runs
+# deploy.sh (zero-downtime rolling deploy with auto-rollback).
+#
+# Frontend is intentionally OMITTED — Cloudflare Pages auto-deploys from this
+# repository on every push to main. Do not add a frontend job here.
+#
+# ── GitHub Secrets required ────────────────────────────────────────────────────
+# Go to: Settings → Secrets and Variables → Actions → New repository secret
+#
+#   TS_OAUTH_CLIENT_ID
+#     Tailscale OAuth client ID.
+#     Create at: https://login.tailscale.com/admin/settings/oauth
+#     Scope required: devices:write
+#     The OAuth client must own the ACL tag used below (tag:ci).
+#
+#   TS_OAUTH_SECRET
+#     Tailscale OAuth client secret (paired with TS_OAUTH_CLIENT_ID above).
+#
+#   PROD_TAILSCALE_HOSTNAME
+#     Tailscale machine name of the production server (e.g. "prod-server").
+#     Find it in the Tailscale admin console under Machines.
+#     You can also use the Tailscale IP (e.g. 100.x.x.x) if you prefer.
+#
+#   PROD_USER
+#     SSH username on the production server (e.g. "ubuntu" or "deploy").
+#
+#   PROD_SSH_KEY
+#     Private SSH key used to authenticate as PROD_USER.
+#     The matching public key must be present in ~/.ssh/authorized_keys on the
+#     production server. Generate with: ssh-keygen -t ed25519 -C "github-actions"
+#
+#   PROD_APP_DIR
+#     Absolute path to the project root on the production server.
+#     Example: /opt/cyberguard  or  /home/ubuntu/AgenticRAG
+#
+#   SLACK_WEBHOOK  (optional)
+#     Slack incoming webhook URL for deploy success/failure notifications.
+#     Create at: https://api.slack.com/messaging/webhooks
+#     If this secret is absent or empty, deploy.sh silently skips notifications.
+# ==============================================================================
+
+name: Deploy to production
 
 on:
   push:
     branches: [main]
-  workflow_dispatch:
+  workflow_dispatch:      # allow manual trigger from the GitHub Actions UI
 
+# Prevent two deploys from running concurrently — the second push queues and
+# waits. We never cancel an in-flight deploy mid-rollout.
 concurrency:
   group: production-deploy
-  cancel-in-progress: false   # never cancel an in-flight deploy
+  cancel-in-progress: false
 
 jobs:
-  deploy:
-    name: Zero-Downtime Rolling Deploy
+  deploy-backend:
+    name: Deploy backend + services
     runs-on: ubuntu-latest
-    # Frontend is on Cloudflare Pages (auto-deploy on push to main) — no frontend job here.
 
     steps:
-      # ── 1. Connect to private server via Tailscale ──────────────────────────
+      - uses: actions/checkout@v4
+
+      # ── Connect to the private server via Tailscale ─────────────────────────
+      # Uses an OAuth client (not a pre-auth key) so the ephemeral key is
+      # auto-generated and auto-deleted — no manual key rotation needed.
       - name: Connect to Tailscale
         uses: tailscale/github-action@v2
         with:
-          oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
-          tags: tag:ci
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci                    # must match your Tailscale ACL tag
+          ephemeral: true                 # key is auto-deleted after job
 
-      # ── 2. Rolling deploy via SSH ────────────────────────────────────────────
-      - name: Rolling deploy on production server
+      # ── SSH into the server and run the rolling deploy script ────────────────
+      # deploy.sh handles: git pull, image build, one-by-one service rollout,
+      # health checks, auto-rollback on failure, Slack notifications, and pruning.
+      # DEPLOY_ENV=production skips the interactive environment prompt.
+      - name: Deploy via SSH over Tailscale
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.PROD_HOST }}      # Tailscale IP of your server
+          host: ${{ secrets.PROD_TAILSCALE_HOSTNAME }}   # e.g. prod-server
           username: ${{ secrets.PROD_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
-          port: 22
-          command_timeout: 30m
+          timeout: 600s
           script: |
-            set -euo pipefail
-            cd "${{ secrets.PROD_REPO_DIR }}"
+            set -e
+            cd ${{ secrets.PROD_APP_DIR }}    # e.g. /opt/cyberguard
+            DEPLOY_ENV=production SLACK_WEBHOOK="${SLACK_WEBHOOK:-}" bash deploy.sh
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
-            # Pass DEPLOY_ENV so deploy.sh skips the interactive prompt,
-            # and optionally pass SLACK_WEBHOOK for notifications.
-            export DEPLOY_ENV=production
-            export SLACK_WEBHOOK="${SLACK_WEBHOOK:-}"
-
-            bash deploy.sh
+  # Frontend is intentionally omitted — Cloudflare Pages auto-deploys from this repo
