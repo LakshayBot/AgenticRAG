@@ -273,11 +273,11 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8005/api/v1/advisories/health')"]
-      interval: 30s
+      test: ["CMD", "curl", "-f", "http://localhost:8005/api/v1/advisories/health"]
+      interval: 15s
       timeout: 5s
       retries: 3
-      start_period: 30s
+      start_period: 20s
     restart: unless-stopped
     networks:
       - rag-network

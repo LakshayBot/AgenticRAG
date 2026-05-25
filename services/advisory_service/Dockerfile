@@ -1,39 +1,36 @@
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm AS base
+FROM python:3.12-slim
 
 WORKDIR /app
 
-# Copy configuration files
-COPY pyproject.toml uv.lock ./
+# Install system dependencies (curl required for healthcheck)
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# UV_COMPILE_BYTECODE for generating .pyc files -> faster application startup.
-# UV_LINK_MODE=copy to silence warnings about not being able to use hard links
-# since the cache and sync target are on separate file systems.
-ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
+# Copy shared source library (config, schemas, services used by all Python microservices)
+COPY src/ /app/src/
 
-# Install dependencies
-RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=/app/uv.lock \
-    --mount=type=bind,source=pyproject.toml,target=/app/pyproject.toml \
-    uv sync --frozen --no-dev
+# Copy advisory router as the entrypoint app
+COPY services/advisory_service/ /app/service/
+RUN touch /app/service/__init__.py
 
-# Copy source code
-COPY src /app/src
-
-FROM python:3.12.8-slim AS final
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir \
+    fastapi==0.115.6 \
+    uvicorn[standard]==0.34.0 \
+    pydantic==2.10.5 \
+    pydantic-settings==2.7.1 \
+    sqlalchemy==2.0.37 \
+    psycopg2-binary==2.9.10 \
+    httpx==0.28.1 \
+    opensearch-py==2.7.1 \
+    numpy==1.26.4
 
 EXPOSE 8005
 
-# PYTHONUNBUFFERED=1 to disable output buffering
-ENV PYTHONUNBUFFERED=1
-ARG VERSION=0.1.0
-ENV APP_VERSION=$VERSION
+HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=3 \
+    CMD curl -f http://localhost:8005/api/v1/advisories/health || exit 1
 
-WORKDIR /app
-
-# Copy the virtual environment from the base stage
-COPY --from=base /app /app
-
-# Add virtual environment to PATH
-ENV PATH="/app/.venv/bin:$PATH"
-
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8005", "--workers", "2"]
+CMD ["uvicorn", "service.app:app", "--host", "0.0.0.0", "--port", "8005", "--workers", "2"]
