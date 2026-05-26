@@ -62,18 +62,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
       # ── Connect to the private server via Tailscale ─────────────────────────
-      # Uses an OAuth client (not a pre-auth key) so the ephemeral key is
-      # auto-generated and auto-deleted — no manual key rotation needed.
+      # Uses an OAuth client (not a pre-auth key) — nodes created this way are
+      # ephemeral by default and auto-deleted once the runner exits.
       - name: Connect to Tailscale
         uses: tailscale/github-action@v2
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci                    # must match your Tailscale ACL tag
-          ephemeral: true                 # key is auto-deleted after job
 
       # ── SSH into the server and run the rolling deploy script ────────────────
       # deploy.sh handles: git pull, image build, one-by-one service rollout,
