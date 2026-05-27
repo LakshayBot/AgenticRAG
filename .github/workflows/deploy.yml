@@ -148,7 +148,7 @@ jobs:
           timeout: 600s
           script: |
             set -e
-            cd ${{ secrets.PROD_APP_DIR }}    # e.g. /opt/cyberguard
+            cd "${{ secrets.PROD_APP_DIR }}"
             DEPLOY_ENV=production SLACK_WEBHOOK="${SLACK_WEBHOOK:-}" bash deploy.sh
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
