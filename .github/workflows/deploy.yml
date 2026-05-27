@@ -61,6 +61,14 @@ jobs:
     name: Deploy backend + services
     runs-on: ubuntu-latest
 
+    # SSH_HOST and SSH_USER are exposed as plain env vars so both the diagnostic
+    # step and the deploy step can reference them without repeating the secret
+    # interpolation. PROD_SSH_KEY and SLACK_WEBHOOK remain secret-only and are
+    # never printed.
+    env:
+      SSH_HOST: ${{ secrets.PROD_TAILSCALE_HOSTNAME }}
+      SSH_USER: ${{ secrets.PROD_USER }}
+
     steps:
       - uses: actions/checkout@v4.2.2
 
@@ -74,6 +82,59 @@ jobs:
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci                    # must match your Tailscale ACL tag
 
+      # ── Diagnostics: Tailscale + SSH reachability ────────────────────────────
+      # Runs BEFORE the deploy step. Fails fast if the server is unreachable so
+      # the error is obvious. Secret values (keys, webhook) are never printed.
+      - name: Debug Tailscale and SSH connectivity
+        env:
+          PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
+        run: |
+          set -euxo pipefail
+
+          # ── 1. Tailscale network status ──────────────────────────────────────
+          echo "============================================================"
+          echo "== Tailscale status"
+          echo "============================================================"
+          tailscale status || true
+
+          # ── 2. Target host / user (no secrets printed) ───────────────────────
+          echo "============================================================"
+          echo "== SSH target"
+          echo "============================================================"
+          echo "Host : ${SSH_HOST:-<unset — check PROD_TAILSCALE_HOSTNAME secret>}"
+          echo "User : ${SSH_USER:-<unset — check PROD_USER secret>}"
+
+          # ── 3. TCP reachability on port 22 ───────────────────────────────────
+          echo "============================================================"
+          echo "== TCP reachability (port 22)"
+          echo "============================================================"
+          nc -vz -w 10 "$SSH_HOST" 22
+
+          # ── 4. Write key to temp file (chmod 600, deleted at end of step) ────
+          echo "============================================================"
+          echo "== SSH handshake test (verbose)"
+          echo "============================================================"
+          KEY_FILE="$(mktemp)"
+          chmod 600 "$KEY_FILE"
+          # Write without echoing — printf keeps the key out of xtrace output
+          set +x
+          printf '%s\n' "$PROD_SSH_KEY" > "$KEY_FILE"
+          set -x
+
+          # ── 5. Full SSH handshake — fails the step if unreachable ────────────
+          ssh -vvv \
+            -i "$KEY_FILE" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=15 \
+            "${SSH_USER}@${SSH_HOST}" 'echo connected'
+
+          # ── 6. Clean up key immediately ──────────────────────────────────────
+          rm -f "$KEY_FILE"
+          echo "============================================================"
+          echo "== Diagnostics passed — proceeding to deploy"
+          echo "============================================================"
+
       # ── SSH into the server and run the rolling deploy script ────────────────
       # deploy.sh handles: git pull, image build, one-by-one service rollout,
       # health checks, auto-rollback on failure, Slack notifications, and pruning.
@@ -81,8 +142,8 @@ jobs:
       - name: Deploy via SSH over Tailscale
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.PROD_TAILSCALE_HOSTNAME }}   # e.g. prod-server
-          username: ${{ secrets.PROD_USER }}
+          host: ${{ env.SSH_HOST }}
+          username: ${{ env.SSH_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
           timeout: 600s
           script: |
