@@ -186,6 +186,11 @@ class Settings(BaseConfigSettings):
     app_version: str = "0.1.0"
     debug: bool = True
     environment: Literal["development", "staging", "production"] = "development"
+
+    @field_validator("environment", mode="before")
+    @classmethod
+    def normalize_environment(cls, v: str) -> str:
+        return v.lower() if isinstance(v, str) else v
     service_name: str = "rag-api"
 
     # Updated to use shared PostgreSQL database with .NET
