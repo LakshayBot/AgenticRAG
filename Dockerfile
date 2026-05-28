@@ -21,7 +21,7 @@ COPY backend/src/RagSystem.ApiGateway/RagSystem.ApiGateway.csproj ./backend/src/
 COPY backend/src/RagSystem.Core/RagSystem.Core.csproj             ./backend/src/RagSystem.Core/
 COPY backend/src/RagSystem.Infrastructure/RagSystem.Infrastructure.csproj ./backend/src/RagSystem.Infrastructure/
 
-RUN dotnet restore backend/RagSystem.sln
+RUN dotnet restore backend/RagSystem.sln --verbosity minimal
 
 # Copy the full backend source and publish
 COPY backend/ ./backend/
@@ -29,7 +29,7 @@ COPY backend/ ./backend/
 RUN dotnet publish backend/src/RagSystem.ApiGateway/RagSystem.ApiGateway.csproj \
     -c "$CONFIGURATION" \
     -o /app/publish \
-    --no-restore
+    --verbosity normal
 
 # ── Stage 2: Runtime ──────────────────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
