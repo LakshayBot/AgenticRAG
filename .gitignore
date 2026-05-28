@@ -195,8 +195,8 @@ opensearch_data/
 # Ollama
 ollama_data/
 
-# Data directories
-data/
+# Data directories (only top-level /data/ for user uploads, not backend source Data/ folders)
+/data/
 
 # Test files and output
 test_output/
