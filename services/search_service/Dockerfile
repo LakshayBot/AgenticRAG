@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install -y \
 
 # Copy shared source code
 COPY src/ /app/src/
-COPY pyproject.toml /app/
 
 # Copy service-specific files
 COPY services/search_service/ /app/service/
