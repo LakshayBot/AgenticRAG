@@ -145,7 +145,8 @@ jobs:
           host: ${{ env.SSH_HOST }}
           username: ${{ env.SSH_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
-          timeout: 600s
+          timeout: 30s
+          command_timeout: 60m
           script: |
             set -e
             cd "${{ secrets.PROD_APP_DIR }}"
