@@ -16,7 +16,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r /app/requirements-base.txt && \
     pip install --no-cache-dir \
     python-multipart==0.0.20 \
-    docling==2.16.0 \
     python-magic==0.4.27
 
 EXPOSE 8001
