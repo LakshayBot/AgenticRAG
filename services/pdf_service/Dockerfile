@@ -15,7 +15,6 @@ RUN touch /app/service/__init__.py
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r /app/requirements-base.txt && \
     pip install --no-cache-dir \
-    python-multipart==0.0.20 \
     python-magic==0.4.27
 
 EXPOSE 8001
