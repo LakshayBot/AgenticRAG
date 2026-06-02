@@ -27,6 +27,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     httpx==0.28.1 \
     opensearch-py==2.7.1 \
     redis==5.2.1 \
+    langfuse \
     numpy==1.26.4
 
 EXPOSE 8005

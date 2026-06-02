@@ -26,6 +26,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     sqlalchemy==2.0.37 \
     psycopg2-binary==2.9.10 \
     redis==5.2.1 \
+    langfuse \
     docling==2.16.0 \
     python-magic==0.4.27
 
