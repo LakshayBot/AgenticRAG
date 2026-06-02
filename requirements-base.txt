@@ -16,4 +16,5 @@ langfuse
 ollama==0.4.6
 python-telegram-bot>=20.0
 docling==2.16.0
+python-multipart==0.0.20
 numpy==1.26.4
