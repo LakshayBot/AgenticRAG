@@ -26,6 +26,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     psycopg2-binary==2.9.10 \
     redis==5.2.1 \
     opensearch-py==2.7.1 \
+    langfuse \
     numpy==1.26.4
 
 # Expose service port
