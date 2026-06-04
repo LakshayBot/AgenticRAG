@@ -106,7 +106,7 @@ export function LiveFeed({ stats }: { stats: AdvisoryStats }) {
           className="bg-surface-container-lowest hover:bg-surface-container-low text-on-surface p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-colors border border-outline-variant/10 shadow-sm group"
         >
           <span className="material-symbols-outlined text-[#ca8a04] dark:text-[#d4c84a] group-hover:scale-110 transition-transform">manage_search</span>
-          <span className="text-xs font-medium text-center">Search Logs</span>
+          <span className="text-xs font-medium text-center">Search Incidents</span>
         </Link>
       </div>
     </>
