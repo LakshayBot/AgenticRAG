@@ -330,29 +330,39 @@ export function DataOverview({ stats, systemStats }: DataOverviewProps) {
           <div className="font-body text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">
             Data Ingestion
           </div>
-          <div className="flex items-end gap-1 sm:gap-1.5 h-14 sm:h-16">
+          <div className="flex items-end gap-1 sm:gap-1.5 h-12 sm:h-16">
             {[
-              { key: 'low',      label: 'L' },
-              { key: 'medium',   label: 'M' },
-              { key: 'high',     label: 'H' },
-              { key: 'critical', label: 'C' },
+              { key: 'low',      label: 'Low' },
+              { key: 'medium',   label: 'Med' },
+              { key: 'high',     label: 'High' },
+              { key: 'critical', label: 'Crit' },
             ].map(({ key, label }) => {
               const val = stats.severityBreakdown[key] ?? 0
               const max = Math.max(...Object.values(stats.severityBreakdown), 1)
               const pct = Math.max((val / max) * 100, 6)
               const isCrit = key === 'critical'
               return (
-                <div key={key} className="flex flex-col items-center gap-1 flex-1">
-                  <span className="text-[9px] font-semibold text-on-surface-variant/60">{label}</span>
-                  <div
-                    className={`w-full rounded-t-sm transition-colors hover:opacity-80 ${
-                      isCrit ? 'bg-md-primary' : 'bg-surface-container-high'
-                    }`}
-                    style={{ height: `${pct}%` }}
-                  />
+                <div
+                  key={key}
+                  className={`w-full rounded-t-sm transition-colors hover:opacity-80 relative group ${
+                    isCrit ? 'bg-md-primary' : 'bg-surface-container-high'
+                  }`}
+                  style={{ height: `${pct}%` }}
+                  title={`${label}: ${val}`}
+                >
+                  <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[8px] font-semibold text-on-surface-variant/50 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    {label}
+                  </span>
                 </div>
               )
             })}
+          </div>
+          <div className="flex gap-1 sm:gap-1.5 mt-1">
+            {['Low', 'Med', 'High', 'Crit'].map((label) => (
+              <div key={label} className="flex-1 text-center text-[8px] font-medium text-on-surface-variant/40 uppercase">
+                {label}
+              </div>
+            ))}
           </div>
         </div>
 
@@ -366,11 +376,31 @@ export function DataOverview({ stats, systemStats }: DataOverviewProps) {
               const services = systemStats?.services.pythonServices ?? {}
               const entries = Object.entries(services)
               if (entries.length === 0) {
-                return (
-                  <div className="text-[10px] text-on-surface-variant/50 text-right">
-                    No services available
+                return [
+                  { label: 'Database', healthy: systemStats?.services.databaseHealthy },
+                  { label: 'Cache',    healthy: systemStats?.services.cacheHealthy },
+                  { label: 'API Gateway', healthy: true },
+                ].map(({ label, healthy }) => (
+                  <div key={label} className="flex items-center gap-3 md:justify-end">
+                    <span className="text-[10px] sm:text-xs font-medium text-on-surface-variant whitespace-nowrap">
+                      {label}
+                    </span>
+                    <div className="flex gap-1 sm:gap-1.5 w-full md:w-auto">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className={`flex-1 md:w-6 h-1.5 rounded-full ${
+                            healthy === false
+                              ? i === 0 ? 'bg-[#d97706] dark:bg-[#ffb77a]' : 'bg-surface-container-high'
+                              : healthy === true
+                                ? 'bg-md-primary'
+                                : 'bg-surface-container-high'
+                          }`}
+                        />
+                      ))}
+                    </div>
                   </div>
-                )
+                ))
               }
               return entries.slice(0, 3).map(([name, svc]) => (
                 <div key={name} className="flex items-center gap-3 md:justify-end">
