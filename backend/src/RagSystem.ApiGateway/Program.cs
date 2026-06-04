@@ -9,6 +9,7 @@ using RagSystem.Infrastructure.Services.PythonClients;
 using StackExchange.Redis;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using System.Reflection;
 using Hangfire;
 using Hangfire.PostgreSql;
 
@@ -16,6 +17,11 @@ using Hangfire.PostgreSql;
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var builder = WebApplication.CreateBuilder(args);
+
+var assemblyVersion = Assembly.GetExecutingAssembly()
+    .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+    ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString()
+    ?? "0.0.0";
 
 // Configure Kestrel to listen on port 8000
 builder.WebHost.ConfigureKestrel(options =>
@@ -255,9 +261,16 @@ app.MapGet("/health", async (ApplicationDbContext context, IConnectionMultiplexe
     {
         status = "healthy",
         timestamp = DateTime.UtcNow,
-        version = "1.0.0"
+        version = assemblyVersion
     });
 });
+
+// Version endpoint — always returns 200 so the frontend can check the deployed version
+app.MapGet("/version", () => Results.Ok(new
+{
+    version = assemblyVersion,
+    timestamp = DateTime.UtcNow
+}));
 
 app.Logger.LogInformation("RAG System API Gateway starting on port 8000");
 

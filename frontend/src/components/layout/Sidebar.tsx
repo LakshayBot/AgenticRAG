@@ -1,12 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuthStore } from '@/stores/authStore'
 import { useTheme } from '@/hooks/useTheme'
 import { cn } from '@/lib/utils'
 import { LoginModal } from '@/components/layout/LoginModal'
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000'
 
 const NAV_ITEMS = [
   { label: 'Overview',      href: '/dashboard',  icon: 'dashboard',  public: true  },
@@ -24,6 +26,14 @@ export function Sidebar() {
   const { isDark, toggle: toggleTheme } = useTheme()
   const isAdmin    = user?.role === 'admin'
   const [collapsed, setCollapsed] = useState(false)
+  const [apiVersion, setApiVersion] = useState<string>('')
+
+  useEffect(() => {
+    fetch(`${API_BASE}/version`)
+      .then((r) => r.json())
+      .then((data) => setApiVersion(data.version ?? ''))
+      .catch(() => setApiVersion(''))
+  }, [])
 
   // Login modal state
   const [modalOpen, setModalOpen] = useState(false)
@@ -78,7 +88,7 @@ export function Sidebar() {
                 CyberGuard
               </h1>
               <span className="text-[10px] text-on-surface-variant font-medium tracking-normal">
-                Tactical Curator v2.4
+                Tactical Curator{apiVersion ? ` v${apiVersion}` : ''}
               </span>
             </div>
             <button
