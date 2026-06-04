@@ -13,12 +13,12 @@ const SEV_COLOR: Record<string, string> = {
 
 export function LiveFeed({ stats }: { stats: AdvisoryStats }) {
   const latest = stats.recentAdvisories[0]
-  const recent = stats.recentAdvisories.slice(1, 4)
+  const recent = stats.recentAdvisories.slice(1, 6)
 
   return (
     <>
       {/* Live Feed Card */}
-      <div className="bg-surface-container-lowest rounded-[24px] p-5 shadow-lg border border-outline-variant/10 relative flex flex-col gap-3">
+      <div className="bg-surface-container-lowest rounded-[24px] p-5 shadow-lg border border-outline-variant/10 relative flex flex-col gap-4 min-h-[320px]">
         {/* Pulse error badge */}
         <div className="absolute -top-3 -right-3 w-6 h-6 bg-error text-on-error rounded-full flex items-center justify-center shadow-sm animate-pulse z-10">
           <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>priority_high</span>
