@@ -67,7 +67,7 @@ export default function DashboardPage() {
         {loadingAdvisory ? (
           <Skeleton className="min-h-[500px] sm:min-h-[600px] flex-1" />
         ) : advisoryStats ? (
-          <DataOverview stats={advisoryStats} />
+          <DataOverview stats={advisoryStats} systemStats={systemStats} />
         ) : (
           <div className="rounded-[32px] bg-surface-container-lowest p-8 min-h-[500px] flex items-center justify-center text-on-surface-variant">
             <span className="material-symbols-outlined text-[18px] mr-2">analytics</span>

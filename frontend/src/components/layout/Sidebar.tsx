@@ -10,12 +10,15 @@ import { LoginModal } from '@/components/layout/LoginModal'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000'
 
-const NAV_ITEMS = [
+const TOP_NAV = [
   { label: 'Overview',      href: '/dashboard',  icon: 'dashboard',  public: true  },
   { label: 'Threat Intel',  href: '/advisories', icon: 'security',   public: false },
   { label: 'Analytics',     href: '/analytics',  icon: 'bar_chart',  public: false },
-  { label: 'AI Query',      href: '/ask',        icon: 'psychology', public: false },
-  { label: 'Incident Logs', href: '/search',     icon: 'history',    public: false },
+]
+
+const BOTTOM_NAV = [
+  { label: 'AI Query',          href: '/ask',     icon: 'psychology', public: false },
+  { label: 'Search Incidents',  href: '/search',  icon: 'history',    public: false },
 ]
 
 const ADMIN_ITEM = { label: 'System Health', href: '/admin', icon: 'analytics', public: false }
@@ -39,7 +42,8 @@ export function Sidebar() {
   const [modalOpen, setModalOpen] = useState(false)
   const [pendingHref, setPendingHref] = useState<string | undefined>(undefined)
 
-  const items = isAdmin ? [...NAV_ITEMS, ADMIN_ITEM] : NAV_ITEMS
+  const topItems = isAdmin ? [...TOP_NAV, ADMIN_ITEM] : TOP_NAV
+  const bottomItems = BOTTOM_NAV
 
   function handleProtectedClick(href: string) {
     setPendingHref(href)
@@ -101,14 +105,13 @@ export function Sidebar() {
           </div>
         )}
 
-        {/* Nav links */}
-        <nav className={cn('flex-1 py-2 space-y-0.5', collapsed ? 'px-1' : 'pr-4')}>
-          {items.map(({ label, href, icon, public: isPublic }) => {
+        {/* Top nav links */}
+        <nav className={cn('py-2 space-y-0.5', collapsed ? 'px-1' : 'pr-4')}>
+          {topItems.map(({ label, href, icon, public: isPublic }) => {
             const active = pathname === href || (href !== '/dashboard' && (pathname ?? '').startsWith(href))
             const locked = !isPublic && !isAuthenticated
 
             if (locked) {
-              // Render a button that opens the login modal
               return (
                 <button
                   key={href}
@@ -171,19 +174,77 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* Dark mode toggle / Generate Report */}
-        <div className={cn('pb-3', collapsed ? 'px-1' : 'px-6')}>
-          <button
-            className={cn(
-              'w-full bg-surface-container-high hover:bg-surface-variant text-on-surface py-3 rounded-lg flex items-center gap-2 transition-colors font-medium text-sm shadow-sm',
-              collapsed ? 'justify-center px-2' : 'justify-center px-4'
-            )}
-            title={collapsed ? 'Generate Report' : undefined}
-          >
-            <span className="material-symbols-outlined text-[18px]">description</span>
-            {!collapsed && 'Generate Report'}
-          </button>
-        </div>
+        {/* Spacer — pushes bottom nav items to the bottom */}
+        <div className="flex-1" />
+
+        {/* Bottom nav links */}
+        <nav className={cn('py-2 space-y-0.5', collapsed ? 'px-1' : 'pr-4')}>
+          {bottomItems.map(({ label, href, icon, public: isPublic }) => {
+            const active = pathname === href || (pathname ?? '').startsWith(href)
+            const locked = !isPublic && !isAuthenticated
+
+            if (locked) {
+              return (
+                <button
+                  key={href}
+                  onClick={() => handleProtectedClick(href)}
+                  title={collapsed ? `${label} (sign in required)` : undefined}
+                  className={cn(
+                    'w-full flex items-center gap-3 py-3 text-[13px] font-semibold transition-all duration-200',
+                    'text-on-surface-variant/50 hover:text-on-surface-variant hover:bg-surface-container/30',
+                    collapsed
+                      ? 'justify-center px-2 rounded-full mx-1'
+                      : 'px-6 rounded-r-full'
+                  )}
+                >
+                  <span
+                    className="material-symbols-outlined text-[20px] shrink-0"
+                    style={{ fontVariationSettings: "'FILL' 0" }}
+                  >
+                    {icon}
+                  </span>
+                  {!collapsed && (
+                    <span className="flex-1 text-left">{label}</span>
+                  )}
+                  {!collapsed && (
+                    <span
+                      className="material-symbols-outlined text-[14px] text-on-surface-variant/40"
+                      style={{ fontVariationSettings: "'FILL' 1" }}
+                    >
+                      lock
+                    </span>
+                  )}
+                </button>
+              )
+            }
+
+            return (
+              <Link
+                key={href}
+                href={href}
+                title={collapsed ? label : undefined}
+                className={cn(
+                  'flex items-center gap-3 py-3 text-[13px] font-semibold transition-all duration-200 hover:translate-x-0.5',
+                  collapsed
+                    ? 'justify-center px-2 rounded-full mx-1'
+                    : 'px-6 rounded-r-full',
+                  active
+                    ? 'text-on-surface'
+                    : 'text-on-surface-variant hover:bg-surface-container/50'
+                )}
+                style={active ? { backgroundColor: 'var(--nav-active-bg)' } : undefined}
+              >
+                <span
+                  className="material-symbols-outlined text-[20px] shrink-0"
+                  style={{ fontVariationSettings: active ? "'FILL' 1" : "'FILL' 0" }}
+                >
+                  {icon}
+                </span>
+                {!collapsed && label}
+              </Link>
+            )
+          })}
+        </nav>
 
         {/* User row */}
         <div className={cn('pb-4 pt-2 border-t border-outline-variant/30', collapsed ? 'px-1' : 'px-4')}>

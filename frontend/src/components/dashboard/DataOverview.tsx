@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { motion, useMotionValue, useMotionTemplate, useAnimationFrame } from 'framer-motion'
-import type { AdvisoryStats } from '@/lib/types'
+import type { AdvisoryStats, SystemStatsResponse } from '@/lib/types'
 
 // ── Infinite scrolling grid (no colour blobs) ──────────────────────────────
 function GridPattern({ offsetX, offsetY }: { offsetX: ReturnType<typeof useMotionValue<number>>; offsetY: ReturnType<typeof useMotionValue<number>> }) {
@@ -66,6 +66,7 @@ function InfiniteGrid() {
 
 interface DataOverviewProps {
   stats: AdvisoryStats
+  systemStats?: SystemStatsResponse
 }
 
 // SVG logos for ecosystems — inline so no external deps
@@ -157,24 +158,12 @@ function RubyLogo({ size = 22 }: { size?: number }) {
   )
 }
 
-export function DataOverview({ stats }: DataOverviewProps) {
+export function DataOverview({ stats, systemStats }: DataOverviewProps) {
   const critical = stats.severityBreakdown['critical'] ?? 0
   const total = stats.totalAdvisories || 1
 
   const critPct = critical / total
   const CIRC = 2 * Math.PI * 40
-
-  // Data Ingestion bar heights (derived from severity breakdown)
-  const sevVals = [
-    stats.severityBreakdown['low'] ?? 0,
-    stats.severityBreakdown['medium'] ?? 0,
-    stats.severityBreakdown['high'] ?? 0,
-    stats.severityBreakdown['critical'] ?? 0,
-    (stats.severityBreakdown['medium'] ?? 0) * 0.6,
-    (stats.severityBreakdown['low'] ?? 0) * 0.8,
-  ]
-  const maxSev = Math.max(...sevVals, 1)
-  const ingestPcts = sevVals.map((v) => Math.max((v / maxSev) * 100, 8))
 
   // Ecosystem nodes — positioned mathematically on orbit ring
   const ecosystems: {
@@ -341,14 +330,29 @@ export function DataOverview({ stats }: DataOverviewProps) {
           <div className="font-body text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">
             Data Ingestion
           </div>
-          <div className="flex items-end gap-1 sm:gap-1.5 h-12 sm:h-16">
-            {ingestPcts.map((pct, i) => (
-              <div
-                key={i}
-                className={`w-full rounded-t-sm transition-colors hover:opacity-80 ${i === 2 ? 'bg-md-primary' : 'bg-surface-container-high'}`}
-                style={{ height: `${pct}%` }}
-              />
-            ))}
+          <div className="flex items-end gap-1 sm:gap-1.5 h-14 sm:h-16">
+            {[
+              { key: 'low',      label: 'L' },
+              { key: 'medium',   label: 'M' },
+              { key: 'high',     label: 'H' },
+              { key: 'critical', label: 'C' },
+            ].map(({ key, label }) => {
+              const val = stats.severityBreakdown[key] ?? 0
+              const max = Math.max(...Object.values(stats.severityBreakdown), 1)
+              const pct = Math.max((val / max) * 100, 6)
+              const isCrit = key === 'critical'
+              return (
+                <div key={key} className="flex flex-col items-center gap-1 flex-1">
+                  <span className="text-[9px] font-semibold text-on-surface-variant/60">{label}</span>
+                  <div
+                    className={`w-full rounded-t-sm transition-colors hover:opacity-80 ${
+                      isCrit ? 'bg-md-primary' : 'bg-surface-container-high'
+                    }`}
+                    style={{ height: `${pct}%` }}
+                  />
+                </div>
+              )
+            })}
           </div>
         </div>
 
@@ -358,27 +362,38 @@ export function DataOverview({ stats }: DataOverviewProps) {
             Service Status
           </div>
           <div className="flex flex-col gap-2 sm:gap-2.5">
-            {[
-              { label: 'Auth Systems', filled: 4, total: 5 },
-              { label: 'Core API',     filled: 5, total: 5 },
-              { label: 'Databases',    filled: 2, total: 5, warn: true },
-            ].map(({ label, filled, total: t, warn }) => (
-              <div key={label} className="flex items-center gap-3 md:justify-end">
-                <span className="text-[10px] sm:text-xs font-medium text-on-surface-variant whitespace-nowrap">{label}</span>
-                <div className="flex gap-1 sm:gap-1.5 w-full md:w-auto">
-                  {Array.from({ length: t }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`flex-1 md:w-6 h-1.5 rounded-full ${
-                        i < filled
-                          ? warn ? 'bg-[#d97706] dark:bg-[#ffb77a]' : 'bg-md-primary'
-                          : 'bg-surface-container-high'
-                      }`}
-                    />
-                  ))}
+            {(() => {
+              const services = systemStats?.services.pythonServices ?? {}
+              const entries = Object.entries(services)
+              if (entries.length === 0) {
+                return (
+                  <div className="text-[10px] text-on-surface-variant/50 text-right">
+                    No services available
+                  </div>
+                )
+              }
+              return entries.slice(0, 3).map(([name, svc]) => (
+                <div key={name} className="flex items-center gap-3 md:justify-end">
+                  <span className="text-[10px] sm:text-xs font-medium text-on-surface-variant whitespace-nowrap capitalize">
+                    {name.replace(/-/g, ' ')}
+                  </span>
+                  <div className="flex gap-1 sm:gap-1.5 w-full md:w-auto">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className={`flex-1 md:w-6 h-1.5 rounded-full ${
+                          svc.healthy
+                            ? 'bg-md-primary'
+                            : i === 0
+                              ? 'bg-[#d97706] dark:bg-[#ffb77a]'
+                              : 'bg-surface-container-high'
+                        }`}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            })()}
           </div>
         </div>
       </div>

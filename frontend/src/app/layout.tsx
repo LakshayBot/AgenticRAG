@@ -31,6 +31,9 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: 'CyberGuard — Security Intelligence Platform',
   description: 'Agentic RAG-powered cybersecurity advisory and threat intelligence platform',
+  icons: {
+    icon: '/favicon.svg',
+  },
 }
 
 // Inline script: applies dark class before first paint to avoid flash
@@ -55,6 +58,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${dmSerifDisplay.variable} ${manrope.variable} ${spaceGrotesk.variable}`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
