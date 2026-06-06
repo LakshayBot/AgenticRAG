@@ -43,16 +43,16 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 
   /* ── Material Design custom color tokens ── */
-  --color-md-primary:                    #c62828;
-  --color-md-primary-fixed:              #ffcdd2;
-  --color-md-primary-fixed-dim:          #ef9a9a;
-  --color-md-primary-dim:                #b71c1c;
-  --color-md-primary-container:          #ffcdd2;
-  --color-md-on-primary:                 #ffffff;
-  --color-md-on-primary-container:       #4a0000;
-  --color-md-on-primary-fixed:           #3e0000;
-  --color-md-on-primary-fixed-variant:   #5f0000;
-  --color-md-inverse-primary:            #ef9a9a;
+  --color-md-primary:                    #E23E57;
+  --color-md-primary-fixed:              #FFD0D6;
+  --color-md-primary-fixed-dim:          #F5BCC4;
+  --color-md-primary-dim:                #C8324D;
+  --color-md-primary-container:          #FFD0D6;
+  --color-md-on-primary:                 #FFFFFF;
+  --color-md-on-primary-container:       #3E0015;
+  --color-md-on-primary-fixed:           #3E0015;
+  --color-md-on-primary-fixed-variant:   #5F001F;
+  --color-md-inverse-primary:            #F491A3;
 
   --color-md-secondary:                  #5c5b5b;
   --color-md-secondary-dim:              #504f4f;
@@ -78,7 +78,7 @@
   --color-md-surface-dim:                #d1d5d7;
   --color-md-surface-bright:             #f5f6f7;
   --color-md-surface-variant:            #dadddf;
-  --color-md-surface-tint:               #c62828;
+  --color-md-surface-tint:               #E23E57;
   --color-md-surface-container-lowest:   #ffffff;
   --color-md-surface-container-low:      #eff1f2;
   --color-md-surface-container:          #e6e8ea;
@@ -163,7 +163,7 @@
   --card-foreground: #2c2f30;
   --popover: #ffffff;
   --popover-foreground: #2c2f30;
-  --primary: #c62828;
+  --primary: #E23E57;
   --primary-foreground: #ffffff;
   --secondary: #e5e2e1;
   --secondary-foreground: #525151;
@@ -174,16 +174,16 @@
   --destructive: #b02500;
   --border: #abadae;
   --input: #abadae;
-  --ring: #c62828;
+  --ring: #E23E57;
   --radius: 0.25rem;
   --sidebar: #eff1f2;
   --sidebar-foreground: #2c2f30;
-  --sidebar-primary: #c62828;
+  --sidebar-primary: #E23E57;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #e6e8ea;
   --sidebar-accent-foreground: #2c2f30;
   --sidebar-border: #abadae;
-  --sidebar-ring: #c62828;
+  --sidebar-ring: #E23E57;
 }
 
 .dark {
@@ -193,8 +193,8 @@
   --card-foreground: #e6e8ea;
   --popover: #1a1d1e;
   --popover-foreground: #e6e8ea;
-  --primary: #ef5350;
-  --primary-foreground: #ffffff;
+  --primary: #F491A3;
+  --primary-foreground: #3E0015;
   --secondary: #2a2d2e;
   --secondary-foreground: #e6e8ea;
   --muted: #2a2d2e;
@@ -204,26 +204,26 @@
   --destructive: #f95630;
   --border: #2a2d2e;
   --input: #2a2d2e;
-  --ring: #ef5350;
+  --ring: #F491A3;
   --sidebar: #1a1d1e;
   --sidebar-foreground: #e6e8ea;
-  --sidebar-primary: #ef5350;
-  --sidebar-primary-foreground: #ffffff;
+  --sidebar-primary: #F491A3;
+  --sidebar-primary-foreground: #3E0015;
   --sidebar-accent: #2a2d2e;
   --sidebar-accent-foreground: #e6e8ea;
   --sidebar-border: #2a2d2e;
-  --sidebar-ring: #ef5350;
+  --sidebar-ring: #F491A3;
 }
 
 /* ─── Dark mode Material token overrides ────────────────────────────── */
 .dark {
-  --color-md-primary:                    #ef5350;
-  --color-md-primary-fixed:              #ef9a9a;
-  --color-md-primary-fixed-dim:          #e57373;
-  --color-md-primary-dim:                #e53935;
-  --color-md-primary-container:          #7f0000;
-  --color-md-on-primary:                 #ffffff;
-  --color-md-on-primary-container:       #ffcdd2;
+  --color-md-primary:                    #F491A3;
+  --color-md-primary-fixed:              #F5BCC4;
+  --color-md-primary-fixed-dim:          #EC8E9A;
+  --color-md-primary-dim:                #DE7B88;
+  --color-md-primary-container:          #6B1028;
+  --color-md-on-primary:                 #3E0015;
+  --color-md-on-primary-container:       #FFD0D6;
   --color-md-surface:                    #0c0f10;
   --color-md-surface-dim:                #0c0f10;
   --color-md-surface-bright:             #323537;
@@ -364,7 +364,7 @@
 
 /* ─── Kinetic text (hollow stroke) ──────────────────────────────────── */
 .kinetic-text {
-  -webkit-text-stroke: 1px rgba(198, 40, 40, 0.1);
+  -webkit-text-stroke: 1px rgba(226, 62, 87, 0.1);
   color: transparent;
 }
 
