@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useStream } from '@/hooks/useStream'
 import type { SourceDocument } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { SidebarTrigger } from '@/components/ui/sidebar'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import ThinkingDog from '@/components/ThinkingDog'
@@ -169,16 +170,19 @@ function ChatContent() {
   const hasContext = !!advisoryTitle
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-full overflow-hidden">
       <div className="flex-1 flex flex-col overflow-hidden">
 
         {/* Header */}
         <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
-          <div>
-            <h1 className="font-display text-[20px] text-on-surface">AI Query</h1>
-            <p className="text-[12px] text-on-surface-variant">
-              Ask questions about security advisories and threat intelligence
-            </p>
+          <div className="flex items-center gap-2">
+            <SidebarTrigger className="-ml-1" />
+            <div>
+              <h1 className="font-display text-[20px] text-on-surface">AI Query</h1>
+              <p className="text-[12px] text-on-surface-variant">
+                Ask questions about security advisories and threat intelligence
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">

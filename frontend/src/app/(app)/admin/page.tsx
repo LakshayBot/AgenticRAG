@@ -10,6 +10,7 @@ import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
+import { SidebarTrigger } from '@/components/ui/sidebar'
 
 type Tab = 'overview' | 'users' | 'jobs'
 
@@ -226,11 +227,14 @@ export default function AdminPage() {
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-[26px] text-on-surface">System Health</h1>
-          <p className="text-[13px] text-on-surface-variant mt-0.5">
-            Admin dashboard — infrastructure and user management
-          </p>
+        <div className="flex items-center gap-2">
+          <SidebarTrigger className="-ml-2" />
+          <div>
+            <h1 className="font-display text-[26px] text-on-surface">System Health</h1>
+            <p className="text-[13px] text-on-surface-variant mt-0.5">
+              Admin dashboard — infrastructure and user management
+            </p>
+          </div>
         </div>
 
         <button
