@@ -11,17 +11,17 @@ import { LoginModal } from '@/components/layout/LoginModal'
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000'
 
 const TOP_NAV = [
-  { label: 'Overview',      href: '/dashboard',  icon: 'dashboard',  public: true  },
-  { label: 'Threat Intel',  href: '/advisories', icon: 'security',   public: false },
-  { label: 'Analytics',     href: '/analytics',  icon: 'bar_chart',  public: false },
+  { label: 'Overview',      href: '/dashboard',  icon: 'dashboard',  isPublic: true  },
+  { label: 'Threat Intel',  href: '/advisories', icon: 'security',   isPublic: false },
+  { label: 'Analytics',     href: '/analytics',  icon: 'bar_chart',  isPublic: false },
 ]
 
 const BOTTOM_NAV = [
-  { label: 'AI Query',          href: '/ask',     icon: 'psychology', public: false },
-  { label: 'Search Incidents',  href: '/search',  icon: 'history',    public: false },
+  { label: 'AI Query',          href: '/ask',     icon: 'psychology', isPublic: false },
+  { label: 'Search Incidents',  href: '/search',  icon: 'history',    isPublic: false },
 ]
 
-const ADMIN_ITEM = { label: 'System Health', href: '/admin', icon: 'analytics', public: false }
+const ADMIN_ITEM = { label: 'System Health', href: '/admin', icon: 'analytics', isPublic: false }
 
 function NavLink({
   label,
