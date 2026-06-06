@@ -7,6 +7,7 @@ import { api } from '@/lib/api'
 import type { SearchResponse, SearchResult } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import DOMPurify from 'dompurify'
+import { SidebarTrigger } from '@/components/ui/sidebar'
 
 function ScoreBadge({ score }: { score: number }) {
   const pct = Math.min(score * 100, 100)
@@ -113,11 +114,14 @@ function SearchContent() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
-      <div className="mb-6">
-        <h1 className="font-display text-[26px] text-on-surface">Incident Logs</h1>
-        <p className="text-[13px] text-on-surface-variant mt-0.5">
-          Search across indexed security advisories and documents
-        </p>
+      <div className="mb-6 flex items-center gap-3">
+        <SidebarTrigger className="-ml-2" />
+        <div>
+          <h1 className="font-display text-[26px] text-on-surface">Incident Logs</h1>
+          <p className="text-[13px] text-on-surface-variant mt-0.5">
+            Search across indexed security advisories and documents
+          </p>
+        </div>
       </div>
 
       {/* Search form */}
