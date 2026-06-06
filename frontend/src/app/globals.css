@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -8,7 +9,7 @@
   /* shadcn base */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -153,6 +154,12 @@
   --font-label:    var(--font-space-grotesk);
   --font-numbers:  var(--font-manrope);
   --font-display:  var(--font-dm-serif);
+  --font-heading: var(--font-sans);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
 }
 
 /* ─── shadcn CSS variable overrides (light) ─────────────────────────── */
@@ -176,13 +183,13 @@
   --input: #abadae;
   --ring: #A6293B;
   --radius: 0.25rem;
-  --sidebar: #eff1f2;
-  --sidebar-foreground: #2c2f30;
+  --sidebar: #1a1d1e;
+  --sidebar-foreground: #e0e3e4;
   --sidebar-primary: #A6293B;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e6e8ea;
-  --sidebar-accent-foreground: #2c2f30;
-  --sidebar-border: #abadae;
+  --sidebar-accent: #282b2c;
+  --sidebar-accent-foreground: #e0e3e4;
+  --sidebar-border: #3a3d3e;
   --sidebar-ring: #A6293B;
 }
 
@@ -194,7 +201,7 @@
   --popover: #1a1d1e;
   --popover-foreground: #e6e8ea;
   --primary: #E57380;
-  --primary-foreground: #3E0015;
+  --primary-foreground: #3E0012;
   --secondary: #2a2d2e;
   --secondary-foreground: #e6e8ea;
   --muted: #2a2d2e;
@@ -208,7 +215,7 @@
   --sidebar: #1a1d1e;
   --sidebar-foreground: #e6e8ea;
   --sidebar-primary: #E57380;
-  --sidebar-primary-foreground: #3E0015;
+  --sidebar-primary-foreground: #3E0012;
   --sidebar-accent: #2a2d2e;
   --sidebar-accent-foreground: #e6e8ea;
   --sidebar-border: #2a2d2e;
@@ -259,6 +266,7 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     scroll-behavior: smooth;
+    @apply font-sans;
   }
   body {
     margin: 0;
@@ -268,6 +276,10 @@
     color: var(--color-md-on-surface);
     font-family: var(--font-body), sans-serif;
     min-height: 100vh;
+    @apply bg-background text-foreground;
+  }
+  * {
+    @apply border-border outline-ring/50;
   }
 }
 
