@@ -1,9 +1,6 @@
 import type { Metadata } from 'next'
-import { Inter, DM_Serif_Display, Manrope, Space_Grotesk, Geist } from 'next/font/google'
+import { Inter, DM_Serif_Display, Manrope, Space_Grotesk } from 'next/font/google'
 import './globals.css'
-import { cn } from "@/lib/utils";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const inter = Inter({
   subsets: ['latin'],
@@ -58,7 +55,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={cn(inter.variable, dmSerifDisplay.variable, manrope.variable, spaceGrotesk.variable, "font-sans", geist.variable)}>
+    <html lang="en" className={`${inter.variable} ${dmSerifDisplay.variable} ${manrope.variable} ${spaceGrotesk.variable}`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
