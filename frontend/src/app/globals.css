@@ -183,13 +183,13 @@
   --input: #abadae;
   --ring: #A6293B;
   --radius: 0.25rem;
-  --sidebar: #1a1d1e;
-  --sidebar-foreground: #e0e3e4;
+  --sidebar: #eff1f2;
+  --sidebar-foreground: #2c2f30;
   --sidebar-primary: #A6293B;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #282b2c;
-  --sidebar-accent-foreground: #e0e3e4;
-  --sidebar-border: #3a3d3e;
+  --sidebar-accent: #e6e8ea;
+  --sidebar-accent-foreground: #2c2f30;
+  --sidebar-border: #abadae;
   --sidebar-ring: #A6293B;
 }
 
