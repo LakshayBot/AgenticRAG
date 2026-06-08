@@ -17,6 +17,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  useSidebar,
 } from '@/components/ui/sidebar'
 import { Shield, Search, Brain, BarChart3, LayoutDashboard, ShieldAlert, Cog, LogIn, Sun, Moon } from 'lucide-react'
 
@@ -43,6 +44,7 @@ export function AppSidebar() {
   const [apiVersion, setApiVersion] = useState<string>('')
   const [modalOpen, setModalOpen] = useState(false)
   const [pendingHref, setPendingHref] = useState<string | undefined>(undefined)
+  const { setOpenMobile } = useSidebar()
 
   useEffect(() => {
     fetch(`${API_BASE}/version`)
@@ -91,6 +93,7 @@ export function AppSidebar() {
                       <SidebarMenuItem key={href}>
                         <SidebarMenuButton
                           onClick={() => {
+                            setOpenMobile(false)
                             setPendingHref(href)
                             setModalOpen(true)
                           }}
@@ -129,6 +132,7 @@ export function AppSidebar() {
                       <SidebarMenuItem key={href}>
                         <SidebarMenuButton
                           onClick={() => {
+                            setOpenMobile(false)
                             setPendingHref(href)
                             setModalOpen(true)
                           }}
@@ -174,6 +178,7 @@ export function AppSidebar() {
               ) : (
                 <SidebarMenuButton
                   onClick={() => {
+                    setOpenMobile(false)
                     setPendingHref(undefined)
                     setModalOpen(true)
                   }}
