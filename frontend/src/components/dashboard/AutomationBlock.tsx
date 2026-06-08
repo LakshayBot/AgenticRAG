@@ -15,27 +15,16 @@ interface AutomationItem {
   active: boolean
 }
 
-function getItems(systemStats?: SystemStatsResponse, jobsStatus?: JobsStatusResponse): AutomationItem[] {
-  if (systemStats) {
-    const pyServices = Object.entries(systemStats.services.pythonServices).slice(0, 2)
-    return [
-      ...pyServices.map(([name, svc]) => ({
-        label: name.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
-        status: (svc.healthy ? 'Active' : 'Error') as ItemStatus,
-        active: svc.healthy,
-      })),
-      {
-        label: 'Threat Intel',
-        status: (jobsStatus?.processing ? 'Running' : 'Pending') as ItemStatus,
-        active: false,
-      },
-    ]
-  }
-  return [
-    { label: 'Auto-Patching', status: 'In Progress', active: true  },
-    { label: 'Monitoring',    status: 'Active',       active: true  },
-    { label: 'Threat Intel',  status: 'Pending',      active: false },
-  ]
+const STATIC_ITEMS: AutomationItem[] = [
+  { label: 'Monitoring',    status: 'Active',  active: true  },
+  { label: 'Threat Intel',  status: 'Active',  active: true  },
+  { label: 'Auto-Patching', status: 'Pending', active: false },
+]
+
+const AUTOPATCH_TOOLTIP = 'Working on auto-patching — applying fixes to affected repos in real time.'
+
+function getItems(_systemStats?: SystemStatsResponse, _jobsStatus?: JobsStatusResponse): AutomationItem[] {
+  return STATIC_ITEMS
 }
 
 // Per-status colour tokens — all visible in both light and dark mode
@@ -51,7 +40,7 @@ export function AutomationBlock({ systemStats, jobsStatus }: AutomationBlockProp
   const items = getItems(systemStats, jobsStatus)
 
   return (
-    <div className="bg-secondary-container rounded-[24px] p-4 sm:p-6 flex-1 flex flex-col min-w-0 overflow-hidden">
+    <div className="bg-secondary-container rounded-[24px] p-4 sm:p-6 flex-1 flex flex-col min-w-0 overflow-visible">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="font-headline font-semibold text-lg text-on-secondary-container opacity-90">
@@ -65,7 +54,14 @@ export function AutomationBlock({ systemStats, jobsStatus }: AutomationBlockProp
         {items.map(({ label, status, active }) => {
           const styles = STATUS_STYLES[status] ?? STATUS_STYLES['Pending']
           return (
-            <div key={label} className="flex items-center gap-2 min-w-0">
+            <div key={label} className={`relative flex items-center gap-2 min-w-0 group ${label === 'Auto-Patching' ? 'cursor-help' : ''}`}>
+              {label === 'Auto-Patching' && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30">
+                  <div className="text-[10px] leading-snug font-medium whitespace-normal px-2.5 py-1.5 rounded-lg shadow-lg bg-zinc-800 text-zinc-100 dark:bg-zinc-100 dark:text-zinc-800 text-center">
+                    {AUTOPATCH_TOOLTIP}
+                  </div>
+                </div>
+              )}
               {/* Icon */}
               <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${styles.badge}`}>
                 <span

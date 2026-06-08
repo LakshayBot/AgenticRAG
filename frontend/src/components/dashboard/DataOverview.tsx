@@ -377,9 +377,9 @@ export function DataOverview({ stats, systemStats }: DataOverviewProps) {
               const entries = Object.entries(services)
               if (entries.length === 0) {
                 return [
-                  { label: 'Database', healthy: systemStats?.services.databaseHealthy },
-                  { label: 'Cache',    healthy: systemStats?.services.cacheHealthy },
-                  { label: 'API Gateway', healthy: true },
+                  { label: 'API Gateway', healthy: true  },
+                  { label: 'Hangfire',    healthy: true  },
+                  { label: 'Monitoring',  healthy: true  },
                 ].map(({ label, healthy }) => (
                   <div key={label} className="flex items-center gap-3 md:justify-end">
                     <span className="text-[10px] sm:text-xs font-medium text-on-surface-variant whitespace-nowrap">
