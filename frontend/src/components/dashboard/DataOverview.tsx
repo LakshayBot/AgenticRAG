@@ -393,7 +393,7 @@ export function DataOverview({ stats, systemStats }: DataOverviewProps) {
                             healthy === false
                               ? i === 0 ? 'bg-[#d97706] dark:bg-[#ffb77a]' : 'bg-surface-container-high'
                               : healthy === true
-                                ? 'bg-md-primary'
+                                ? 'bg-emerald-500 dark:bg-emerald-400'
                                 : 'bg-surface-container-high'
                           }`}
                         />
@@ -413,7 +413,7 @@ export function DataOverview({ stats, systemStats }: DataOverviewProps) {
                         key={i}
                         className={`flex-1 md:w-6 h-1.5 rounded-full ${
                           svc.healthy
-                            ? 'bg-md-primary'
+                            ? 'bg-emerald-500 dark:bg-emerald-400'
                             : i === 0
                               ? 'bg-[#d97706] dark:bg-[#ffb77a]'
                               : 'bg-surface-container-high'
