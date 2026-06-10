@@ -39,6 +39,12 @@ public class RAGRequest
     /// Each entry has "role" ("user" or "assistant") and "content".
     /// </summary>
     public List<ConversationTurn>? ConversationHistory { get; set; }
+
+    /// <summary>
+    /// Conversation ID from the frontend. When set, the user's question and the
+    /// assistant's answer are automatically persisted to the chat_messages table.
+    /// </summary>
+    public Guid? ConversationId { get; set; }
 }
 
 public class ConversationTurn

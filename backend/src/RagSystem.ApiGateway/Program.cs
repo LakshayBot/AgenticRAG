@@ -165,6 +165,7 @@ builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<IRAGService, RAGService>();
 builder.Services.AddScoped<IUploadService, UploadService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IConversationService, ConversationService>();
 
 // Register repositories
 builder.Services.AddScoped<IAdvisoryRepository, RagSystem.Infrastructure.Repositories.AdvisoryRepository>();

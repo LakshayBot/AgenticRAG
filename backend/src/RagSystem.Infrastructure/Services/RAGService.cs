@@ -16,17 +16,20 @@ public class RAGService : IRAGService
     private readonly IAgenticRAGServiceClient _agenticClient;
     private readonly ICacheService _cache;
     private readonly ApplicationDbContext _context;
+    private readonly IConversationService _conversationService;
     private readonly ILogger<RAGService> _logger;
 
     public RAGService(
         IAgenticRAGServiceClient agenticClient,
         ICacheService cache,
         ApplicationDbContext context,
+        IConversationService conversationService,
         ILogger<RAGService> logger)
     {
         _agenticClient = agenticClient;
         _cache = cache;
         _context = context;
+        _conversationService = conversationService;
         _logger = logger;
     }
 
@@ -131,6 +134,27 @@ public class RAGService : IRAGService
 
                 _context.SearchHistories.Add(history);
                 await _context.SaveChangesAsync();
+
+                // Save to conversation chat history (if part of a conversation)
+                if (request.ConversationId.HasValue)
+                {
+                    await _conversationService.SaveMessageAsync(
+                        request.ConversationId.Value,
+                        "user",
+                        request.Question);
+
+                    await _conversationService.SaveMessageAsync(
+                        request.ConversationId.Value,
+                        "assistant",
+                        response.Answer,
+                        response.Sources.Select(s => new Dictionary<string, object>
+                        {
+                            ["sourceId"] = s.SourceId,
+                            ["title"] = s.Title,
+                            ["score"] = s.Score
+                        }).ToList(),
+                        response.ResponseTimeMs);
+                }
             }
 
             // Cache the result only for single-turn (non-conversation) queries
