@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useTheme } from '@/hooks/useTheme'
 import { LoginModal } from '@/components/layout/LoginModal'
 import { conversationsApi } from '@/lib/api'
+import { cn } from '@/lib/utils'
 import {
   Sidebar,
   SidebarContent,
@@ -21,7 +22,7 @@ import {
   SidebarMenuButton,
   useSidebar,
 } from '@/components/ui/sidebar'
-import { Shield, Search, Brain, BarChart3, LayoutDashboard, ShieldAlert, Cog, LogIn, Sun, Moon, Plus, Trash2 } from 'lucide-react'
+import { Shield, Search, Brain, BarChart3, LayoutDashboard, ShieldAlert, Cog, LogIn, Sun, Moon, Plus, MessageSquare } from 'lucide-react'
 import { formatDistanceToNow, parseISO } from 'date-fns'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000'
@@ -43,7 +44,7 @@ function ChatHistoryList() {
   const pathname = usePathname()
   const { isAuthenticated } = useAuthStore()
   const queryClient = useQueryClient()
-  const { setOpenMobile } = useSidebar()
+  const { setOpenMobile, state } = useSidebar()
 
   const [activeId, setActiveId] = useState<string | null>(null)
 
@@ -69,53 +70,96 @@ function ChatHistoryList() {
 
   if (!isAuthenticated) return null
 
+  const isCollapsed = state === 'collapsed'
+  const items = conversations?.slice(0, 20) ?? []
+
+  // --- Collapsed state: compact icon with count badge ---
+  if (isCollapsed) {
+    return (
+      <SidebarGroup>
+        <SidebarGroupLabel className="justify-center">
+          {items.length > 0 ? (
+            <Link href="/ask" className="relative" title="Chat History">
+              <MessageSquare className="size-4 text-muted-foreground" />
+              <span className="absolute -top-1.5 -right-2.5 flex items-center justify-center min-w-[14px] h-[14px] rounded-full bg-sidebar-primary text-[8px] font-bold text-sidebar-primary-foreground leading-none px-0.5">
+                {items.length}
+              </span>
+            </Link>
+          ) : (
+            <MessageSquare className="size-4 text-muted-foreground/50" />
+          )}
+        </SidebarGroupLabel>
+        <SidebarGroupContent />
+      </SidebarGroup>
+    )
+  }
+
+  // --- Expanded state: full chat list ---
   return (
-    <SidebarGroup>
+    <SidebarGroup className="flex-1 min-h-0 overflow-hidden">
       <SidebarGroupLabel>
         <span className="flex-1">Chat History</span>
-        {conversations && conversations.length > 0 && (
-          <Link
-            href="/ask"
-            onClick={() => setOpenMobile(false)}
-            className="text-[10px] hover:text-sidebar-primary transition-colors flex items-center gap-0.5 ml-auto"
-          >
-            <Plus className="size-3" />
-          </Link>
-        )}
+        <Link
+          href="/ask"
+          onClick={() => setOpenMobile(false)}
+          className="text-[10px] text-muted-foreground hover:text-sidebar-primary transition-colors flex items-center gap-0.5 shrink-0"
+        >
+          <Plus className="size-3" />
+        </Link>
       </SidebarGroupLabel>
-      <SidebarGroupContent>
+      <SidebarGroupContent className="flex-1 min-h-0">
         {isLoading ? (
-          <div className="px-2 py-2 text-[11px] text-muted-foreground">Loading...</div>
-        ) : !conversations || conversations.length === 0 ? (
-          <div className="px-2 py-2 text-[11px] text-muted-foreground">No chats yet</div>
+          <div className="space-y-2 px-1 py-1">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="space-y-1.5 rounded-md px-2 py-1.5">
+                <div className="h-3 bg-sidebar-accent/60 rounded animate-pulse w-full" />
+                <div className="h-3 bg-sidebar-accent/60 rounded animate-pulse w-2/3" />
+              </div>
+            ))}
+          </div>
+        ) : items.length === 0 ? (
+          <p className="px-2 py-3 text-[11px] text-muted-foreground text-center">
+            Start a new chat to investigate threats
+          </p>
         ) : (
-          <SidebarMenu>
-            {conversations.slice(0, 15).map((conv) => {
+          <div className="flex flex-col overflow-y-auto max-h-[280px] scrollbar-thin">
+            {items.map((conv) => {
               const active = activeId === conv.id
+              const timeStr = formatDistanceToNow(parseISO(conv.updatedAt), { addSuffix: true })
               return (
-                <SidebarMenuItem key={conv.id}>
-                  <SidebarMenuButton
-                    isActive={active}
-                    tooltip={conv.title}
-                    render={<Link href={`/ask?c=${conv.id}`} onClick={() => setOpenMobile(false)} />}
-                    className="group/chat [&>span]:truncate [&>span]:text-xs [&>a]:truncate"
-                  >
-                    <span className="truncate text-xs">{conv.title}</span>
-                    <span className="text-[10px] text-muted-foreground ml-auto shrink-0 hidden group-hover/chat:hidden">
-                      {formatDistanceToNow(parseISO(conv.updatedAt), { addSuffix: true })}
+                <Link
+                  key={conv.id}
+                  href={`/ask?c=${conv.id}`}
+                  onClick={() => setOpenMobile(false)}
+                  className={cn(
+                    'group relative flex flex-col px-2 py-1.5 rounded-[4px] transition-colors',
+                    'border-l-2',
+                    active
+                      ? 'border-l-sidebar-primary bg-sidebar-accent/50'
+                      : 'border-l-transparent hover:bg-sidebar-accent/30'
+                  )}
+                >
+                  <span className="text-[12px] leading-snug text-sidebar-foreground line-clamp-2 font-medium">
+                    {conv.title}
+                  </span>
+                  <span className="mt-0.5 flex items-center justify-between">
+                    <span className="text-[10px] text-muted-foreground leading-none">
+                      {timeStr}
                     </span>
                     <button
                       onClick={(e) => handleDelete(e, conv.id)}
-                      className="ml-auto shrink-0 hidden group-hover/chat:block opacity-60 hover:opacity-100 transition-opacity"
-                      aria-label="Delete conversation"
+                      className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity text-muted-foreground hover:text-red-500 shrink-0"
+                      aria-label={`Delete "${conv.title}"`}
                     >
-                      <Trash2 className="size-3" />
+                      <svg width="12" height="12" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-3">
+                        <path d="M5.5 1C5.22386 1 5 1.22386 5 1.5V3H1.5C1.22386 3 1 3.22386 1 3.5C1 3.77614 1.22386 4 1.5 4H2V13.5C2 13.7761 2.22386 14 2.5 14H12.5C12.7761 14 13 13.7761 13 13.5V4H13.5C13.7761 4 14 3.77614 14 3.5C14 3.22386 13.7761 3 13.5 3H10V1.5C10 1.22386 9.77614 1 9.5 1H5.5ZM6 2.5V3H9V2.5C9 2.22386 8.77614 2 8.5 2H6.5C6.22386 2 6 2.22386 6 2.5ZM3 4H12V13H3V4Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd" />
+                      </svg>
                     </button>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                  </span>
+                </Link>
               )
             })}
-          </SidebarMenu>
+          </div>
         )}
       </SidebarGroupContent>
     </SidebarGroup>
