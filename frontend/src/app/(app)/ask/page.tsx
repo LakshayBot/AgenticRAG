@@ -6,7 +6,6 @@ import { useStream } from '@/hooks/useStream'
 import { conversationsApi } from '@/lib/api'
 import type { SourceDocument } from '@/lib/types'
 import { cn } from '@/lib/utils'
-import { SidebarTrigger } from '@/components/ui/sidebar'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import ThinkingDog from '@/components/ThinkingDog'
@@ -213,14 +212,11 @@ function ChatContent() {
 
         {/* Header */}
         <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="-ml-1" />
-            <div>
-              <h1 className="font-display text-[20px] text-on-surface">AI Query</h1>
+          <div>
+            <h1 className="font-display text-[20px] text-on-surface">AI Query</h1>
               <p className="text-[12px] text-on-surface-variant">
                 Ask questions about security advisories and threat intelligence
               </p>
-            </div>
           </div>
 
           <div className="flex items-center gap-2">

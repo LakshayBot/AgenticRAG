@@ -9,7 +9,6 @@ import { AutomationBlock } from '@/components/dashboard/AutomationBlock'
 import { DataOverview } from '@/components/dashboard/DataOverview'
 import { OpenIncidents } from '@/components/dashboard/OpenIncidents'
 import { LiveFeed } from '@/components/dashboard/LiveFeed'
-import { SidebarTrigger } from '@/components/ui/sidebar'
 
 function Skeleton({ className }: { className?: string }) {
   return (
@@ -45,7 +44,6 @@ export default function DashboardPage() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 overflow-x-hidden min-h-screen relative z-10 w-full">
-      <SidebarTrigger className="-ml-2" />
 
       <div className="flex flex-col xl:flex-row xl:items-stretch gap-6 lg:gap-8 mt-2">
         {/* LEFT COLUMN */}
