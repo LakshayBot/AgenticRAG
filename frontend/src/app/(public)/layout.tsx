@@ -8,8 +8,10 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <SidebarProvider defaultOpen={false}>
         <AppSidebar />
         <SidebarInset>
-          <main id="main-content" className="flex-1 overflow-auto animate-fade-in relative">
-            <SidebarTrigger className="absolute top-3 left-1.5 z-20 opacity-40 hover:opacity-100 transition-opacity" />
+          <header className="sticky top-0 z-10 flex h-7 items-center">
+            <SidebarTrigger className="opacity-40 hover:opacity-100 transition-opacity" />
+          </header>
+          <main id="main-content" className="flex-1 overflow-auto animate-fade-in">
             {children}
           </main>
         </SidebarInset>
