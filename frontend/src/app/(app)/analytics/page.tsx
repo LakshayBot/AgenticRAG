@@ -17,7 +17,6 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { analyticsApi } from '@/lib/api'
-import { SidebarTrigger } from '@/components/ui/sidebar'
 import type {
   AnalyticsOverview,
   TimelinePoint,
@@ -164,17 +163,14 @@ export default function AnalyticsPage() {
 
         {/* ── Page header ───────────────────────────────────────────────── */}
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="-ml-2" />
-            <div>
-              <h1 className="font-headline text-3xl font-black text-on-surface">
+          <div>
+            <h1 className="font-headline text-3xl font-black text-on-surface">
                 Platform Analytics
               </h1>
               <p className="text-sm text-on-surface-variant mt-1">
                 Real-time insights into queries, response performance, and advisory intelligence
               </p>
             </div>
-          </div>
           <div className="flex items-center gap-2 text-[11px] text-on-surface-variant bg-surface-container px-3 py-1.5 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
             Live data

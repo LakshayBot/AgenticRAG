@@ -8,7 +8,6 @@ import { formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { SidebarTrigger } from '@/components/ui/sidebar'
 
 interface AdvisoryListResponse {
   total: number
@@ -189,10 +188,7 @@ export default function AdvisoriesPage() {
       {/* Left panel — list */}
       <div className="w-[360px] shrink-0 flex flex-col border-r border-outline-variant h-full">
         <div className="p-4 border-b border-outline-variant space-y-3">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="-ml-1" />
-            <h1 className="font-display text-[20px] text-on-surface">Threat Intelligence</h1>
-          </div>
+          <h1 className="font-display text-[20px] text-on-surface">Threat Intelligence</h1>
 
           {/* Search */}
           <div className="relative">

@@ -1,6 +1,6 @@
 import { Providers } from '@/app/providers'
 import { AppSidebar } from '@/components/layout/AppSidebar'
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -8,7 +8,8 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <SidebarProvider defaultOpen={false}>
         <AppSidebar />
         <SidebarInset>
-          <main id="main-content" className="flex-1 overflow-auto animate-fade-in">
+          <main id="main-content" className="flex-1 overflow-auto animate-fade-in relative">
+            <SidebarTrigger className="absolute top-3 left-1.5 z-20 opacity-40 hover:opacity-100 transition-opacity" />
             {children}
           </main>
         </SidebarInset>
