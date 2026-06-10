@@ -20,6 +20,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar'
 import { Shield, Search, Brain, BarChart3, LayoutDashboard, ShieldAlert, Cog, LogIn, Sun, Moon, Plus, MessageSquare } from 'lucide-react'
@@ -323,10 +324,13 @@ export function AppSidebar() {
                 {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
                 <span>{isDark ? 'Light' : 'Dark'} mode</span>
               </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-      </Sidebar>
+                </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarFooter>
+          <SidebarRail className="w-5 sm:flex sm:items-center sm:justify-center after:opacity-0 hover:after:opacity-100">
+            <span className="size-1.5 rounded-full bg-sidebar-foreground/20" />
+          </SidebarRail>
+        </Sidebar>
 
       <LoginModal
         open={modalOpen}
