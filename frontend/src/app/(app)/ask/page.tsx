@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useStream } from '@/hooks/useStream'
+import { conversationsApi } from '@/lib/api'
 import type { SourceDocument } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { SidebarTrigger } from '@/components/ui/sidebar'
@@ -22,10 +23,8 @@ interface Message {
   role: 'user' | 'assistant'
   content: string
   sources?: SourceDocument[]
-  responseTime?: number  // wall-clock ms from send → done
+  responseTime?: number
 }
-
-// ─── Advisory context badge shown when navigating from search ─────────────────
 
 function AdvisoryContextBadge({
   title,
@@ -66,8 +65,6 @@ function AdvisoryContextBadge({
   )
 }
 
-// ─── Main chat component ───────────────────────────────────────────────────────
-
 function ChatContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -79,7 +76,11 @@ function ChatContent() {
     searchParams.get('title')
   )
 
+  const conversationId = searchParams.get('c')
+  const conversationCreatedRef = useRef(false)
+
   const [messages, setMessages] = useState<Message[]>([])
+  const [messagesLoaded, setMessagesLoaded] = useState(!conversationId)
   const [input, setInput] = useState('')
   const [useAgentic, setUseAgentic] = useState(false)
   const [searchMode, setSearchMode] = useState<'hybrid' | 'bm25' | 'vector'>('hybrid')
@@ -88,10 +89,6 @@ function ChatContent() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const autoSentRef = useRef(false)
   const sendTimeRef = useRef<number>(0)
-  // Stable session ID for the lifetime of this page load — enables conversation continuity
-  const sessionIdRef = useRef<string>(
-    typeof crypto !== 'undefined' ? crypto.randomUUID() : `sess_${Date.now()}`
-  )
 
   const { answer, sources, isStreaming, error, stream, reset } = useStream({
     onDone: (finalAnswer) => {
@@ -128,6 +125,37 @@ function ChatContent() {
     }
   }, [advisoryTitle])
 
+  useEffect(() => {
+    if (!conversationId) return
+    conversationsApi.get(conversationId)
+      .then((detail) => {
+        const mapped: Message[] = detail.messages.map((m) => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+          sources: m.sources as unknown as SourceDocument[] | undefined,
+          responseTime: m.responseTimeMs ?? undefined,
+        }))
+        setMessages(mapped)
+        setMessagesLoaded(true)
+      })
+      .catch(() => {
+        setMessagesLoaded(true)
+      })
+  }, [conversationId])
+
+  useEffect(() => {
+    if (conversationId || conversationCreatedRef.current) return
+    conversationCreatedRef.current = true
+    conversationsApi.create()
+      .then((conv) => {
+        setMessagesLoaded(true)
+        router.replace(`/ask?c=${conv.id}`)
+      })
+      .catch(() => {
+        setMessagesLoaded(true)
+      })
+  }, [conversationId, router])
+
   async function handleSend(text?: string) {
     const question = (text ?? input).trim()
     if (!question || isStreaming) return
@@ -141,8 +169,6 @@ function ChatContent() {
       { role: 'assistant', content: '' },
     ])
 
-    // Build conversation history from current messages (last 6 turns = 3 pairs)
-    // This gives the backend context of what CVE/topic is being discussed
     const conversationHistory = messages.slice(-6).map((m) => ({
       role: m.role,
       content: m.content,
@@ -153,7 +179,7 @@ function ChatContent() {
       topK,
       useHybrid: searchMode === 'hybrid',
       useAgentic,
-      sessionId: sessionIdRef.current,
+      conversationId: conversationId ?? undefined,
       conversationHistory: conversationHistory.length > 0 ? conversationHistory : undefined,
       ...(advisorySourceId ? { advisoryId: advisorySourceId } : {}),
     })
@@ -163,11 +189,23 @@ function ChatContent() {
     setAdvisorySourceId(null)
     setAdvisoryTitle(null)
     setInput('')
-    router.replace('/ask')
+    router.replace(`/ask${conversationId ? `?c=${conversationId}` : ''}`)
   }
 
   const hasMessages = messages.length > 0
   const hasContext = !!advisoryTitle
+
+  if (!messagesLoaded) {
+    return (
+      <div className="flex h-full overflow-hidden">
+        <div className="flex-1 flex items-center justify-center">
+          <span className="material-symbols-outlined text-3xl text-on-surface-variant animate-spin">
+            progress_activity
+          </span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -186,7 +224,6 @@ function ChatContent() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Mode toggle */}
             <div className="flex rounded-2xl bg-surface-container p-0.5 text-[12px] border border-outline-variant">
               {(['standard', 'agentic'] as const).map((mode) => (
                 <button

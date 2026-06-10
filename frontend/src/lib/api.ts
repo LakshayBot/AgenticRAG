@@ -1,4 +1,4 @@
-import type { ApiError, AuthResponse } from './types'
+import type { ApiError, AuthResponse, Conversation, ConversationDetail } from './types'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000'
 
@@ -305,6 +305,30 @@ export const api = {
       ...opts,
     }),
 
+  patch: <T>(path: string, body?: unknown, opts?: FetchOptions) =>
+    apiFetch<T>(path, {
+      method: 'PATCH',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      ...opts,
+    }),
+
   delete: <T>(path: string, opts?: FetchOptions) =>
     apiFetch<T>(path, { method: 'DELETE', ...opts }),
+}
+
+export const conversationsApi = {
+  list: () =>
+    api.get<Conversation[]>('/api/conversations'),
+
+  create: () =>
+    api.post<Conversation>('/api/conversations'),
+
+  get: (id: string) =>
+    api.get<ConversationDetail>(`/api/conversations/${id}`),
+
+  rename: (id: string, title: string) =>
+    api.patch<Conversation>(`/api/conversations/${id}`, { title }),
+
+  delete: (id: string) =>
+    api.delete<void>(`/api/conversations/${id}`),
 }

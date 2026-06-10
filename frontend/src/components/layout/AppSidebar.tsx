@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/authStore'
 import { useTheme } from '@/hooks/useTheme'
 import { LoginModal } from '@/components/layout/LoginModal'
+import { conversationsApi } from '@/lib/api'
 import {
   Sidebar,
   SidebarContent,
@@ -19,7 +21,8 @@ import {
   SidebarMenuButton,
   useSidebar,
 } from '@/components/ui/sidebar'
-import { Shield, Search, Brain, BarChart3, LayoutDashboard, ShieldAlert, Cog, LogIn, Sun, Moon } from 'lucide-react'
+import { Shield, Search, Brain, BarChart3, LayoutDashboard, ShieldAlert, Cog, LogIn, Sun, Moon, Plus, Trash2 } from 'lucide-react'
+import { formatDistanceToNow, parseISO } from 'date-fns'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000'
 
@@ -35,6 +38,89 @@ const BOTTOM_NAV = [
 ]
 
 const ADMIN_ITEM = { label: 'System Health', href: '/admin', icon: Cog, isPublic: false }
+
+function ChatHistoryList() {
+  const pathname = usePathname()
+  const { isAuthenticated } = useAuthStore()
+  const queryClient = useQueryClient()
+  const { setOpenMobile } = useSidebar()
+
+  const [activeId, setActiveId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    setActiveId(pathname.startsWith('/ask') ? params.get('c') : null)
+  }, [pathname])
+
+  const { data: conversations, isLoading } = useQuery({
+    queryKey: ['conversations'],
+    queryFn: () => conversationsApi.list(),
+    staleTime: 30_000,
+    enabled: isAuthenticated,
+  })
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    await conversationsApi.delete(id)
+    queryClient.invalidateQueries({ queryKey: ['conversations'] })
+  }
+
+  if (!isAuthenticated) return null
+
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel>
+        <span className="flex-1">Chat History</span>
+        {conversations && conversations.length > 0 && (
+          <Link
+            href="/ask"
+            onClick={() => setOpenMobile(false)}
+            className="text-[10px] hover:text-sidebar-primary transition-colors flex items-center gap-0.5 ml-auto"
+          >
+            <Plus className="size-3" />
+          </Link>
+        )}
+      </SidebarGroupLabel>
+      <SidebarGroupContent>
+        {isLoading ? (
+          <div className="px-2 py-2 text-[11px] text-muted-foreground">Loading...</div>
+        ) : !conversations || conversations.length === 0 ? (
+          <div className="px-2 py-2 text-[11px] text-muted-foreground">No chats yet</div>
+        ) : (
+          <SidebarMenu>
+            {conversations.slice(0, 15).map((conv) => {
+              const active = activeId === conv.id
+              return (
+                <SidebarMenuItem key={conv.id}>
+                  <SidebarMenuButton
+                    isActive={active}
+                    tooltip={conv.title}
+                    render={<Link href={`/ask?c=${conv.id}`} onClick={() => setOpenMobile(false)} />}
+                    className="group/chat [&>span]:truncate [&>span]:text-xs [&>a]:truncate"
+                  >
+                    <span className="truncate text-xs">{conv.title}</span>
+                    <span className="text-[10px] text-muted-foreground ml-auto shrink-0 hidden group-hover/chat:hidden">
+                      {formatDistanceToNow(parseISO(conv.updatedAt), { addSuffix: true })}
+                    </span>
+                    <button
+                      onClick={(e) => handleDelete(e, conv.id)}
+                      className="ml-auto shrink-0 hidden group-hover/chat:block opacity-60 hover:opacity-100 transition-opacity"
+                      aria-label="Delete conversation"
+                    >
+                      <Trash2 className="size-3" />
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )
+            })}
+          </SidebarMenu>
+        )}
+      </SidebarGroupContent>
+    </SidebarGroup>
+  )
+}
 
 export function AppSidebar() {
   const pathname        = usePathname()
@@ -59,7 +145,6 @@ export function AppSidebar() {
   return (
     <>
       <Sidebar collapsible="icon" variant="sidebar">
-        {/* ── Header ─────────────────────────────────────────────── */}
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -78,7 +163,6 @@ export function AppSidebar() {
           </SidebarMenu>
         </SidebarHeader>
 
-        {/* ── Top Nav ────────────────────────────────────────────── */}
         <SidebarContent>
           <SidebarGroup>
             <SidebarGroupLabel>Main</SidebarGroupLabel>
@@ -119,7 +203,7 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarGroup className="mt-auto">
+          <SidebarGroup>
             <SidebarGroupLabel>Tools</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -157,9 +241,10 @@ export function AppSidebar() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
+
+          <ChatHistoryList />
         </SidebarContent>
 
-        {/* ── Footer ─────────────────────────────────────────────── */}
         <SidebarFooter>
           <SidebarMenu>
             <SidebarMenuItem>

@@ -236,7 +236,33 @@ export interface StreamErrorEvent {
 
 export type StreamEvent = StreamMetadataEvent | StreamChunkEvent | StreamDoneEvent | StreamErrorEvent
 
-// ─── API Error ────────────────────────────────────────────────────────────────
+// ─── Conversations / Chat History ────────────────────────────────────────────
+
+export interface Conversation {
+  id: string
+  title: string
+  messageCount: number
+  lastMessagePreview?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ConversationDetail {
+  id: string
+  title: string
+  messages: ChatMessage[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ChatMessage {
+  id: number
+  role: 'user' | 'assistant'
+  content: string
+  sources?: SourceDocument[]
+  responseTimeMs?: number
+  createdAt: string
+}
 
 export interface ApiError {
   message?: string

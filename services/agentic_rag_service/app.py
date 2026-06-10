@@ -267,9 +267,11 @@ async def ask_stream(request: RAGRequest):
             answer = await rag_service.ask(
                 query=request.question,
                 user_id=request.user_id or request.session_id or "default",
+                session_id=request.session_id,
                 model=request.model,
                 file_ids=request.file_ids,
                 advisory_ids=request.advisory_ids,
+                conversation_history=request.conversation_history,
             )
             yield f"data: {answer.get('answer', 'No answer')}\n\n"
 

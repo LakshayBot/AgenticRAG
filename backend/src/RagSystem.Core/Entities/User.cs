@@ -51,4 +51,5 @@ public class User
     public virtual ICollection<UploadedFile> UploadedFiles { get; set; } = new List<UploadedFile>();
     public virtual ICollection<SearchHistory> SearchHistories { get; set; } = new List<SearchHistory>();
     public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+    public virtual ICollection<Conversation> Conversations { get; set; } = new List<Conversation>();
 }
