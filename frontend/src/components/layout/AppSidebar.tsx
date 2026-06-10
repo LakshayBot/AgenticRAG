@@ -20,10 +20,9 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar'
-import { Shield, Search, Brain, BarChart3, LayoutDashboard, ShieldAlert, Cog, LogIn, Sun, Moon, Plus, MessageSquare } from 'lucide-react'
+import { Shield, Search, Brain, BarChart3, LayoutDashboard, ShieldAlert, Cog, LogIn, Sun, Moon, Plus, MessageSquare, PanelLeftClose, PanelLeft } from 'lucide-react'
 import { formatDistanceToNow, parseISO } from 'date-fns'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000'
@@ -175,7 +174,7 @@ export function AppSidebar() {
   const [apiVersion, setApiVersion] = useState<string>('')
   const [modalOpen, setModalOpen] = useState(false)
   const [pendingHref, setPendingHref] = useState<string | undefined>(undefined)
-  const { setOpenMobile } = useSidebar()
+  const { setOpenMobile, toggleSidebar } = useSidebar()
 
   useEffect(() => {
     fetch(`${API_BASE}/version`)
@@ -324,13 +323,16 @@ export function AppSidebar() {
                 {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
                 <span>{isDark ? 'Light' : 'Dark'} mode</span>
               </SidebarMenuButton>
-                </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarFooter>
-          <SidebarRail className="w-5 sm:flex sm:items-center sm:justify-center after:opacity-0 hover:after:opacity-100">
-            <span className="size-1.5 rounded-full bg-sidebar-foreground/20" />
-          </SidebarRail>
-        </Sidebar>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={toggleSidebar} tooltip="Collapse sidebar">
+                <PanelLeftClose className="size-4" />
+                <span>Collapse</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      </Sidebar>
 
       <LoginModal
         open={modalOpen}
