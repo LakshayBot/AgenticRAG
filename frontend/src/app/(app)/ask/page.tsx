@@ -76,7 +76,7 @@ function ChatContent() {
   )
 
   const conversationId = searchParams.get('c')
-  const conversationCreatedRef = useRef(false)
+  const lazyCreatedRef = useRef(false)
 
   const [messages, setMessages] = useState<Message[]>([])
   const [messagesLoaded, setMessagesLoaded] = useState(!conversationId)
@@ -125,7 +125,10 @@ function ChatContent() {
   }, [advisoryTitle])
 
   useEffect(() => {
-    if (!conversationId) return
+    if (!conversationId || lazyCreatedRef.current) {
+      lazyCreatedRef.current = false
+      return
+    }
     conversationsApi.get(conversationId)
       .then((detail) => {
         const mapped: Message[] = detail.messages.map((m) => ({
@@ -142,22 +145,22 @@ function ChatContent() {
       })
   }, [conversationId])
 
-  useEffect(() => {
-    if (conversationId || conversationCreatedRef.current) return
-    conversationCreatedRef.current = true
-    conversationsApi.create()
-      .then((conv) => {
-        setMessagesLoaded(true)
-        router.replace(`/ask?c=${conv.id}`)
-      })
-      .catch(() => {
-        setMessagesLoaded(true)
-      })
-  }, [conversationId, router])
-
   async function handleSend(text?: string) {
     const question = (text ?? input).trim()
     if (!question || isStreaming) return
+
+    let currentConversationId = conversationId
+
+    if (!currentConversationId) {
+      try {
+        const conv = await conversationsApi.create()
+        currentConversationId = conv.id
+        lazyCreatedRef.current = true
+        router.replace(`/ask?c=${conv.id}`)
+      } catch {
+        // proceed without conversation — backend still handles the query
+      }
+    }
 
     sendTimeRef.current = Date.now()
     setInput('')
@@ -178,7 +181,7 @@ function ChatContent() {
       topK,
       useHybrid: searchMode === 'hybrid',
       useAgentic,
-      conversationId: conversationId ?? undefined,
+      conversationId: currentConversationId ?? undefined,
       conversationHistory: conversationHistory.length > 0 ? conversationHistory : undefined,
       ...(advisorySourceId ? { advisoryId: advisorySourceId } : {}),
     })
