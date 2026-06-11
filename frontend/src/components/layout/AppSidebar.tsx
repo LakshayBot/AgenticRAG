@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -174,7 +174,45 @@ export function AppSidebar() {
   const [apiVersion, setApiVersion] = useState<string>('')
   const [modalOpen, setModalOpen] = useState(false)
   const [pendingHref, setPendingHref] = useState<string | undefined>(undefined)
-  const { setOpenMobile, toggleSidebar } = useSidebar()
+  const { setOpenMobile, state, setOpen, isMobile } = useSidebar()
+  const [lockedOpen, setLockedOpen] = useState(false)
+  const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleMouseEnter = useCallback(() => {
+    if (isMobile || lockedOpen) return
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current)
+      leaveTimerRef.current = null
+    }
+    setOpen(true)
+  }, [isMobile, lockedOpen, setOpen])
+
+  const handleMouseLeave = useCallback(() => {
+    if (isMobile || lockedOpen) return
+    leaveTimerRef.current = setTimeout(() => {
+      setOpen(false)
+    }, 400)
+  }, [isMobile, lockedOpen, setOpen])
+
+  const handleToggleClick = useCallback(() => {
+    if (state === 'collapsed') {
+      setOpen(true)
+      setLockedOpen(true)
+    } else if (lockedOpen) {
+      setLockedOpen(false)
+      setOpen(false)
+    } else {
+      setLockedOpen(true)
+    }
+  }, [state, lockedOpen, setOpen])
+
+  useEffect(() => {
+    return () => {
+      if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current)
+    }
+  }, [])
+
+  const isExpanded = state === 'expanded'
 
   useEffect(() => {
     fetch(`${API_BASE}/version`)
@@ -188,7 +226,7 @@ export function AppSidebar() {
 
   return (
     <>
-      <Sidebar collapsible="icon" variant="sidebar">
+      <Sidebar collapsible="icon" variant="sidebar" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -325,9 +363,9 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton onClick={toggleSidebar} tooltip="Collapse sidebar">
-                <PanelLeftClose className="size-4" />
-                <span>Collapse</span>
+              <SidebarMenuButton onClick={handleToggleClick} tooltip={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}>
+                {isExpanded ? <PanelLeftClose className="size-4" /> : <PanelLeft className="size-4" />}
+                <span>{isExpanded ? 'Collapse' : 'Expand'}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
