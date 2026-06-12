@@ -24,7 +24,7 @@ export function DemoBanner() {
 
       <p className="flex-1 text-[12px] text-[#ffcc80] leading-snug">
         <span className="font-semibold text-[#ffb74d]">Demo Hosting</span>
-        {' '}— This instance runs on limited resources. The{' '}
+        {' '}- This instance runs on limited resources. The{' '}
         <span className="font-semibold">AI Query</span> feature is disabled to conserve credits.
         To run the full project locally,{' '}
         <a
