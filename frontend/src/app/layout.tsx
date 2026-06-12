@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter, DM_Serif_Display, Manrope, Space_Grotesk } from 'next/font/google'
+import { KofiWidget } from '@/components/layout/KofiWidget'
 import './globals.css'
 
 const inter = Inter({
@@ -29,7 +30,7 @@ const spaceGrotesk = Space_Grotesk({
 })
 
 export const metadata: Metadata = {
-  title: 'CyberGuard — Security Intelligence Platform',
+  title: 'CyberGuard - Security Intelligence Platform',
   description: 'Agentic RAG-powered cybersecurity advisory and threat intelligence platform',
   icons: {
     icon: '/favicon.svg',
@@ -68,6 +69,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased bg-background text-on-background transition-colors duration-300">
         {children}
+        <KofiWidget />
       </body>
     </html>
   )

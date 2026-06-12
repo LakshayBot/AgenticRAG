@@ -21,7 +21,7 @@ const STATIC_ITEMS: AutomationItem[] = [
   { label: 'Auto-Patching', status: 'Pending', active: false },
 ]
 
-const AUTOPATCH_TOOLTIP = 'Working on auto-patching — applying fixes to affected repos in real time.'
+const AUTOPATCH_TOOLTIP = 'Working on auto-patching - applying fixes to affected repos in real time.'
 
 function getItems(_systemStats?: SystemStatsResponse, _jobsStatus?: JobsStatusResponse): AutomationItem[] {
   return STATIC_ITEMS

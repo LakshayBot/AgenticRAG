@@ -249,7 +249,7 @@ export default function AnalyticsPage() {
 
             {/* Query volume line chart */}
             <Card>
-              <ChartTitle>Query Volume — Last 30 Days</ChartTitle>
+              <ChartTitle>Query Volume - Last 30 Days</ChartTitle>
               {queryTimelineQ.isLoading ? <Skeleton /> : (
                 <ResponsiveContainer width="100%" height={200}>
                   <AreaChart data={queryTimeline ?? []} margin={{ top: 4, right: 4, bottom: 0, left: -10 }}>
@@ -271,7 +271,7 @@ export default function AnalyticsPage() {
 
             {/* Cache performance stacked area */}
             <Card>
-              <ChartTitle>Cache Performance — Last 30 Days</ChartTitle>
+              <ChartTitle>Cache Performance - Last 30 Days</ChartTitle>
               {cacheQ.isLoading ? <Skeleton /> : (
                 <ResponsiveContainer width="100%" height={200}>
                   <AreaChart data={cachePerf ?? []} margin={{ top: 4, right: 4, bottom: 0, left: -10 }}>
@@ -402,7 +402,7 @@ export default function AnalyticsPage() {
 
             {/* Advisory timeline area */}
             <Card>
-              <ChartTitle>Advisories Published — Last 12 Months</ChartTitle>
+              <ChartTitle>Advisories Published - Last 12 Months</ChartTitle>
               {advisoryTimelineQ.isLoading ? <Skeleton /> : (
                 <ResponsiveContainer width="100%" height={200}>
                   <AreaChart data={advisoryTimeline ?? []} margin={{ top: 4, right: 4, bottom: 0, left: -10 }}>
@@ -556,7 +556,7 @@ export default function AnalyticsPage() {
             {/* Chunks per advisory bar chart */}
             <Card>
               <ChartTitle>
-                Chunks per Advisory (OpenSearch) — Top {chunks?.counts?.length ?? 30}
+                Chunks per Advisory (OpenSearch) - Top {chunks?.counts?.length ?? 30}
               </ChartTitle>
               {chunksQ.isLoading ? <Skeleton h="h-72" /> : !chunks?.counts?.length ? (
                 <p className="text-sm text-on-surface-variant text-center py-8">

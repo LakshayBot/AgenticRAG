@@ -25,7 +25,7 @@ function OAuthCallbackInner() {
       const expiresAt = params.get('expiresAt')
 
       if (!token || !refreshToken || !expiresAt) {
-        toast.error('OAuth login failed — missing tokens')
+        toast.error('OAuth login failed - missing tokens')
         router.replace('/login?error=oauth_failed')
         return
       }
@@ -47,7 +47,7 @@ function OAuthCallbackInner() {
         sessionStorage.removeItem('redirectAfterLogin')
         router.replace(redirect)
       } catch {
-        toast.error('OAuth login failed — please try again')
+        toast.error('OAuth login failed - please try again')
         router.replace('/login?error=oauth_failed')
       }
     }

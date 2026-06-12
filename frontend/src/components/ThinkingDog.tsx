@@ -3,19 +3,19 @@
 import { useEffect, useState } from 'react'
 
 const FACTS = [
-  'The first computer worm (Morris Worm, 1988) infected ~6,000 machines — 10% of the entire internet.',
-  'A new CVE is published roughly every 20 minutes — over 25,000 per year.',
+  'The first computer worm (Morris Worm, 1988) infected ~6,000 machines - 10% of the entire internet.',
+  'A new CVE is published roughly every 20 minutes - over 25,000 per year.',
   '"Zero-day" means the vendor has had exactly 0 days to patch the vulnerability.',
   'Log4Shell (CVE-2021-44228) potentially affected over 3 billion devices worldwide.',
-  'npm has over 2.1 million published packages — more than any other package registry.',
+  'npm has over 2.1 million published packages - more than any other package registry.',
   'CVSS scores range from 0.0 (none) to 10.0 (critical). 9.0+ means patch immediately.',
   'The term "bug" comes from a real moth found trapped in a Harvard Mark II relay in 1947.',
   'Supply chain attacks increased 742% between 2019 and 2022.',
   'The Heartbleed bug (2014) exposed private keys on ~17% of the world\'s HTTPS servers.',
-  'PyPI hosts over 500,000 Python packages — and malicious ones are found every week.',
+  'PyPI hosts over 500,000 Python packages - and malicious ones are found every week.',
   'Over 80% of breaches involve compromised credentials, not zero-days.',
   'The first CVE (CVE-1999-0001) was published on January 2, 1999.',
-  '"GHSA" stands for GitHub Security Advisory — GitHub publishes thousands each year.',
+  '"GHSA" stands for GitHub Security Advisory - GitHub publishes thousands each year.',
   'The average time to detect a breach is still over 200 days in most organizations.',
 ]
 
