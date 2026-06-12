@@ -389,7 +389,7 @@ function ChatContent() {
                 lock
               </span>
               <p className="text-[11px] text-[#b45309] dark:text-[#ffb74d]">
-                AI Query is disabled in this demo — clone the repo to use this feature locally.
+                AI Query is disabled in this demo - clone the repo to use this feature locally.
               </p>
             </div>
           )}

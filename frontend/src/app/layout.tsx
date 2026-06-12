@@ -29,7 +29,7 @@ const spaceGrotesk = Space_Grotesk({
 })
 
 export const metadata: Metadata = {
-  title: 'CyberGuard — Security Intelligence Platform',
+  title: 'CyberGuard - Security Intelligence Platform',
   description: 'Agentic RAG-powered cybersecurity advisory and threat intelligence platform',
   icons: {
     icon: '/favicon.svg',

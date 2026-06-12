@@ -229,7 +229,7 @@ export default function AdminPage() {
         <div>
           <h1 className="font-display text-[26px] text-on-surface">System Health</h1>
           <p className="text-[13px] text-on-surface-variant mt-0.5">
-            Admin dashboard — infrastructure and user management
+            Admin dashboard - infrastructure and user management
           </p>
         </div>
 
