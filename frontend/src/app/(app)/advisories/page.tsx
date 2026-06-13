@@ -45,11 +45,13 @@ function AdvisoryCard({
   selected: boolean
   onClick: () => void
 }) {
+  const router = useRouter()
+
   return (
-    <button
+    <div
       onClick={onClick}
       className={cn(
-        'w-full text-left p-4 rounded-2xl transition-colors flex flex-col gap-1.5',
+        'w-full text-left p-4 rounded-2xl transition-colors flex flex-col gap-1.5 cursor-pointer',
         selected
           ? 'bg-md-primary/10 ring-1 ring-md-primary/30'
           : 'bg-surface-container-lowest hover:bg-surface-container'
@@ -66,13 +68,24 @@ function AdvisoryCard({
       <p className="text-[13px] font-medium text-on-surface leading-snug line-clamp-2">
         {adv.summary}
       </p>
-      <p className="text-[11px] text-on-surface-variant font-numbers">{adv.ghsaId}</p>
-    </button>
+      <div className="flex items-center gap-2">
+        <p className="text-[11px] text-on-surface-variant font-numbers">{adv.ghsaId}</p>
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            router.push(`/ask?sourceId=${adv.ghsaId}&title=${encodeURIComponent(adv.summary)}`)
+          }}
+          className="ml-auto flex items-center gap-1.5 text-[12px] text-md-primary hover:opacity-80 transition-opacity"
+        >
+          <span className="material-symbols-outlined text-[16px]">psychology</span>
+          Ask about this
+        </button>
+      </div>
+    </div>
   )
 }
 
 function AdvisoryDetailPanel({ ghsaId }: { ghsaId: string }) {
-  const router = useRouter()
   const { data, isLoading } = useQuery({
     queryKey: ['advisory', ghsaId],
     queryFn: () => api.get<Advisory>(`/api/advisories/${ghsaId}`),
@@ -104,13 +117,6 @@ function AdvisoryDetailPanel({ ghsaId }: { ghsaId: string }) {
               CVSS {data.cvssScore.toFixed(1)}
             </span>
           )}
-          <button
-            onClick={() => router.push(`/ask?sourceId=${data.ghsaId}&title=${encodeURIComponent(data.summary)}`)}
-            className="ml-auto flex items-center gap-1.5 px-5 py-2 rounded-full bg-md-primary text-md-on-primary text-[13px] font-semibold hover:opacity-90 transition-opacity"
-          >
-            <span className="material-symbols-outlined text-[16px]">psychology</span>
-            Ask AI
-          </button>
         </div>
         <h2 className="font-display text-[20px] text-on-surface">{data.summary}</h2>
         <p className="text-[12px] text-on-surface-variant font-numbers">{data.ghsaId}</p>
