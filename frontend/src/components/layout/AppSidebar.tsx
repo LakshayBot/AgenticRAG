@@ -122,7 +122,7 @@ function ChatHistoryList() {
             Start a new chat to investigate threats
           </p>
         ) : (
-          <div className="flex flex-col overflow-y-auto max-h-[280px] scrollbar-thin">
+          <div className="overflow-y-auto flex-1 min-h-0">
             {items.map((conv) => {
               const active = activeId === conv.id
               const timeStr = formatDistanceToNow(parseISO(conv.updatedAt), { addSuffix: true })
