@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from functools import lru_cache
 from typing import TYPE_CHECKING, Annotated, Generator, Optional
 
@@ -18,12 +20,9 @@ from src.services.embeddings.jina_client import JinaEmbeddingsClient
 from src.services.langfuse.client import LangfuseTracer
 from src.services.ollama.client import OllamaClient
 from src.services.opensearch.client import OpenSearchClient
-from src.services.pdf_parser.parser import PDFParserService
 from src.services.telegram.bot import TelegramBot
 from src.services.agents.agentic_rag import AgenticRAGService
 from src.services.agents.factory import make_agentic_rag_service
-from src.services.uploads.processor import UploadProcessor
-from src.services.uploads.factory import make_upload_processor
 
 
 @lru_cache
@@ -53,7 +52,7 @@ def get_opensearch_client(request: Request) -> OpenSearchClient:
     return request.app.state.opensearch_client
 
 
-def get_pdf_parser(request: Request) -> PDFParserService:
+def get_pdf_parser(request: Request):
     """Get PDF parser service from the request state."""
     return request.app.state.pdf_parser
 
@@ -85,25 +84,25 @@ def get_telegram_service(request: Request) -> Optional[TelegramBot]:
 
 def get_upload_processor(
     session: Annotated[Session, Depends(get_db_session)],
-    pdf_parser: Annotated[PDFParserService, Depends(get_pdf_parser)],
     settings: Annotated[Settings, Depends(get_settings)],
-) -> UploadProcessor:
+    pdf_parser=Depends(get_pdf_parser),
+):
     """Get upload processor service with dependencies."""
+    from src.services.uploads.factory import make_upload_processor  # lazy — docling heavy
     return make_upload_processor(session=session, settings=settings, pdf_parser=pdf_parser)
-
 
 # Dependency annotations
 SettingsDep = Annotated[Settings, Depends(get_settings)]
-UploadProcessorDep = Annotated[UploadProcessor, Depends(get_upload_processor)]
 DatabaseDep = Annotated[BaseDatabase, Depends(get_database)]
 SessionDep = Annotated[Session, Depends(get_db_session)]
 OpenSearchDep = Annotated[OpenSearchClient, Depends(get_opensearch_client)]
-PDFParserDep = Annotated[PDFParserService, Depends(get_pdf_parser)]
 EmbeddingsDep = Annotated[JinaEmbeddingsClient, Depends(get_embeddings_service)]
 OllamaDep = Annotated[OllamaClient, Depends(get_ollama_client)]
 LangfuseDep = Annotated[LangfuseTracer, Depends(get_langfuse_tracer)]
 CacheDep = Annotated[CacheClient | None, Depends(get_cache_client)]
 TelegramDep = Annotated[Optional[TelegramBot], Depends(get_telegram_service)]
+PDFParserDep = Annotated[object, Depends(get_pdf_parser)]
+UploadProcessorDep = Annotated[object, Depends(get_upload_processor)]
 
 
 def get_agentic_rag_service(

@@ -13,7 +13,6 @@ from src.services.embeddings.factory import make_embeddings_service
 from src.services.langfuse.factory import make_langfuse_tracer
 from src.services.ollama.factory import make_ollama_client
 from src.services.opensearch.factory import make_opensearch_client
-from src.services.pdf_parser.factory import make_pdf_parser_service
 from src.services.telegram.factory import make_telegram_service
 
 # Setup logging
@@ -68,12 +67,18 @@ async def lifespan(app: FastAPI):
         logger.warning("OpenSearch connection failed - search features will be limited")
 
     # Initialize other services (kept for future endpoints and notebook demos)
-    app.state.pdf_parser = make_pdf_parser_service()
+    try:
+        from src.services.pdf_parser.factory import make_pdf_parser_service  # lazy — docling heavy
+        app.state.pdf_parser = make_pdf_parser_service()
+        logger.info("PDF parser initialized")
+    except ImportError:
+        logger.warning("PDF parser unavailable (docling not installed) — PDF uploads disabled")
+        app.state.pdf_parser = None
     app.state.embeddings_service = make_embeddings_service()
     app.state.ollama_client = make_ollama_client()
     app.state.langfuse_tracer = make_langfuse_tracer()
     app.state.cache_client = make_cache_client(settings)
-    logger.info("Services initialized: PDF parser, OpenSearch, Embeddings, Ollama, Langfuse, Cache")
+    logger.info("Services initialized: OpenSearch, Embeddings, Ollama, Langfuse, Cache")
 
     # Initialize Telegram bot (Week 7)
     telegram_service = make_telegram_service(
