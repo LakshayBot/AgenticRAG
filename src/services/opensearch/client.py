@@ -19,6 +19,8 @@ class OpenSearchClient:
         self.host = host
         self.settings = settings
         self.index_name = f"{settings.opensearch.index_name}-{settings.opensearch.chunk_index_suffix}"
+        self._search_timeout = settings.opensearch.search_timeout
+        self._chunk_fetch_limit = settings.opensearch.chunk_fetch_limit
 
         self.client = OpenSearch(
             hosts=[host],
@@ -232,7 +234,7 @@ class OpenSearchClient:
         )
         search_body = builder.build()
 
-        response = self.client.search(index=self.index_name, body=search_body)
+        response = self.client.search(index=self.index_name, body=search_body, request_timeout=self._search_timeout)
 
         results = {"total": response["hits"]["total"]["value"], "hits": []}
 
@@ -297,7 +299,8 @@ class OpenSearchClient:
 
         # Execute search with RRF pipeline
         response = self.client.search(
-            index=self.index_name, body=search_body, params={"search_pipeline": HYBRID_RRF_PIPELINE["id"]}
+            index=self.index_name, body=search_body, params={"search_pipeline": HYBRID_RRF_PIPELINE["id"]},
+            request_timeout=self._search_timeout,
         )
 
         results = {"total": response["hits"]["total"]["value"], "hits": []}
@@ -432,12 +435,12 @@ class OpenSearchClient:
         try:
             search_body = {
                 "query": {"term": {"ghsa_id": ghsa_id}},
-                "size": 1000,
+                "size": self._chunk_fetch_limit,
                 "sort": [{"chunk_index": "asc"}],
                 "_source": {"excludes": ["embedding"]},
             }
 
-            response = self.client.search(index=self.index_name, body=search_body)
+            response = self.client.search(index=self.index_name, body=search_body, request_timeout=self._search_timeout)
 
             chunks = []
             for hit in response["hits"]["hits"]:
@@ -461,12 +464,12 @@ class OpenSearchClient:
         try:
             search_body = {
                 "query": {"term": {"source_id": upload_id}},
-                "size": 1000,
+                "size": self._chunk_fetch_limit,
                 "sort": [{"chunk_index": "asc"}],
                 "_source": {"excludes": ["embedding"]},
             }
 
-            response = self.client.search(index=self.index_name, body=search_body)
+            response = self.client.search(index=self.index_name, body=search_body, request_timeout=self._search_timeout)
 
             chunks = []
             for hit in response["hits"]["hits"]:

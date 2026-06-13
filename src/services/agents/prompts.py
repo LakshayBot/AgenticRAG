@@ -107,20 +107,13 @@ IMPORTANT: Queries that mention any of the following ALWAYS score >= 85:
 - temporal + security: "this week", "latest", "recent", "new" combined with any security context
 - general security browsing: "show me", "list", "what are", "tell me about" + advisories/vulnerabilities
 
-SCORED EXAMPLES (these exact patterns must score as shown):
+SCORED EXAMPLES:
 "What are the most critical vulnerabilities this week?" -> score: 95
-"tell me about npm advisories" -> score: 92
-"show me python vulnerabilities" -> score: 90
-"latest security advisories" -> score: 90
 "What is CVE-2024-12345?" -> score: 95
-"Log4j affected versions?" -> score: 95
-"Are there any critical npm packages?" -> score: 90
+"tell me about npm advisories" -> score: 92
 "What is a buffer overflow?" -> score: 70
 "How do I secure my server?" -> score: 50
-"What is the capital of France?" -> score: 5
-"Write me a poem" -> score: 0
 "What is 2+2?" -> score: 0
-"Who is Elon Musk?" -> score: 5
 
 User Query: {question}
 

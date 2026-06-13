@@ -101,6 +101,8 @@ class OpenSearchSettings(BaseConfigSettings):
     # Hybrid search settings
     rrf_pipeline_name: str = "hybrid-rrf-pipeline"
     hybrid_search_size_multiplier: int = 2  # Get k*multiplier for better recall
+    search_timeout: int = 10  # Seconds per OpenSearch query request
+    chunk_fetch_limit: int = 50  # Max chunks to fetch per advisory/upload
 
 
 class LangfuseSettings(BaseConfigSettings):
@@ -201,7 +203,7 @@ class Settings(BaseConfigSettings):
 
     ollama_host: str = "http://localhost:11434"
     ollama_model: str = "llama3.2:1b"
-    ollama_timeout: int = 300
+    ollama_timeout: int = 30
 
     # Jina AI embeddings configuration
     jina_api_key: str = ""
