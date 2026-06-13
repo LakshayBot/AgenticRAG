@@ -107,7 +107,7 @@ function ChatHistoryList() {
           <Plus className="size-3" />
         </Link>
       </SidebarGroupLabel>
-      <SidebarGroupContent className="flex-1 min-h-0">
+      <SidebarGroupContent className="flex-1 min-h-0 overflow-y-auto">
         {isLoading ? (
           <div className="space-y-2 px-1 py-1">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -122,44 +122,42 @@ function ChatHistoryList() {
             Start a new chat to investigate threats
           </p>
         ) : (
-          <div className="overflow-y-auto flex-1 min-h-0">
-            {items.map((conv) => {
-              const active = activeId === conv.id
-              const timeStr = formatDistanceToNow(parseISO(conv.updatedAt), { addSuffix: true })
-              return (
-                <Link
-                  key={conv.id}
-                  href={`/ask?c=${conv.id}`}
-                  onClick={() => setOpenMobile(false)}
-                  className={cn(
-                    'group relative flex flex-col px-2 py-1.5 rounded-[4px] transition-colors',
-                    'border-l-2',
-                    active
-                      ? 'border-l-sidebar-primary bg-sidebar-accent/50'
-                      : 'border-l-transparent hover:bg-sidebar-accent/30'
-                  )}
-                >
-                  <span className="text-[12px] leading-snug text-sidebar-foreground line-clamp-2 font-medium">
-                    {conv.title}
+          items.map((conv) => {
+            const active = activeId === conv.id
+            const timeStr = formatDistanceToNow(parseISO(conv.updatedAt), { addSuffix: true })
+            return (
+              <Link
+                key={conv.id}
+                href={`/ask?c=${conv.id}`}
+                onClick={() => setOpenMobile(false)}
+                className={cn(
+                  'group relative flex flex-col px-2 py-1.5 rounded-[4px] transition-colors',
+                  'border-l-2',
+                  active
+                    ? 'border-l-sidebar-primary bg-sidebar-accent/50'
+                    : 'border-l-transparent hover:bg-sidebar-accent/30'
+                )}
+              >
+                <span className="text-[12px] leading-snug text-sidebar-foreground line-clamp-2 font-medium">
+                  {conv.title}
+                </span>
+                <span className="mt-0.5 flex items-center justify-between">
+                  <span className="text-[10px] text-muted-foreground leading-none">
+                    {timeStr}
                   </span>
-                  <span className="mt-0.5 flex items-center justify-between">
-                    <span className="text-[10px] text-muted-foreground leading-none">
-                      {timeStr}
-                    </span>
-                    <button
-                      onClick={(e) => handleDelete(e, conv.id)}
-                      className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity text-muted-foreground hover:text-red-500 shrink-0"
-                      aria-label={`Delete "${conv.title}"`}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-3">
-                        <path d="M5.5 1C5.22386 1 5 1.22386 5 1.5V3H1.5C1.22386 3 1 3.22386 1 3.5C1 3.77614 1.22386 4 1.5 4H2V13.5C2 13.7761 2.22386 14 2.5 14H12.5C12.7761 14 13 13.7761 13 13.5V4H13.5C13.7761 4 14 3.77614 14 3.5C14 3.22386 13.7761 3 13.5 3H10V1.5C10 1.22386 9.77614 1 9.5 1H5.5ZM6 2.5V3H9V2.5C9 2.22386 8.77614 2 8.5 2H6.5C6.22386 2 6 2.22386 6 2.5ZM3 4H12V13H3V4Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                  </span>
-                </Link>
-              )
-            })}
-          </div>
+                  <button
+                    onClick={(e) => handleDelete(e, conv.id)}
+                    className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity text-muted-foreground hover:text-red-500 shrink-0"
+                    aria-label={`Delete "${conv.title}"`}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-3">
+                      <path d="M5.5 1C5.22386 1 5 1.22386 5 1.5V3H1.5C1.22386 3 1 3.22386 1 3.5C1 3.77614 1.22386 4 1.5 4H2V13.5C2 13.7761 2.22386 14 2.5 14H12.5C12.7761 14 13 13.7761 13 13.5V4H13.5C13.7761 4 14 3.77614 14 3.5C14 3.22386 13.7761 3 13.5 3H10V1.5C10 1.22386 9.77614 1 9.5 1H5.5ZM6 2.5V3H9V2.5C9 2.22386 8.77614 2 8.5 2H6.5C6.22386 2 6 2.22386 6 2.5ZM3 4H12V13H3V4Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </span>
+              </Link>
+            )
+          })
         )}
       </SidebarGroupContent>
     </SidebarGroup>
