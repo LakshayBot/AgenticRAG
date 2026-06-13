@@ -201,7 +201,11 @@ export default function AdvisoriesPage() {
   return (
     <div className="flex h-full overflow-hidden">
       {/* Left panel — list */}
-      <div className="w-[360px] shrink-0 flex flex-col border-r border-outline-variant h-full">
+      <div className={cn(
+        'shrink-0 flex flex-col border-r border-outline-variant h-full',
+        'w-full lg:w-[360px]',
+        selected ? 'hidden lg:flex' : 'flex'
+      )}>
         <div className="p-4 border-b border-outline-variant space-y-3">
           <h1 className="font-display text-[20px] text-on-surface">Threat Intelligence</h1>
 
@@ -267,9 +271,24 @@ export default function AdvisoriesPage() {
       </div>
 
       {/* Right panel — detail */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className={cn(
+        'flex-1 flex flex-col overflow-hidden',
+        !selected ? 'hidden lg:flex' : 'flex'
+      )}>
         {selected ? (
-          <AdvisoryDetailPanel ghsaId={selected.ghsaId} />
+          <>
+            <div className="lg:hidden flex items-center gap-2 px-4 py-3 border-b border-outline-variant">
+              <button
+                onClick={() => setSelected(null)}
+                className="flex items-center gap-1.5 text-[13px] text-md-primary hover:opacity-80 transition-opacity"
+              >
+                <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                Back
+              </button>
+              <span className="text-[12px] text-on-surface-variant font-numbers ml-auto truncate">{selected.ghsaId}</span>
+            </div>
+            <AdvisoryDetailPanel ghsaId={selected.ghsaId} />
+          </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-on-surface-variant gap-3">
             <span className="material-symbols-outlined text-5xl opacity-30">security</span>
