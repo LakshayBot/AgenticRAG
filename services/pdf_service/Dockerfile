@@ -9,13 +9,12 @@ RUN apt-get update && apt-get install -y \
 
 COPY src/ /app/src/
 COPY requirements-base.txt /app/
+COPY requirements-pdf.txt /app/
 COPY services/pdf_service/ /app/service/
 RUN touch /app/service/__init__.py
 
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r /app/requirements-base.txt && \
-    pip install --no-cache-dir \
-    python-magic==0.4.27
+    pip install --no-cache-dir -r /app/requirements-pdf.txt
 
 EXPOSE 8001
 
