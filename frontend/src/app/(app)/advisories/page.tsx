@@ -103,7 +103,7 @@ function AdvisoryDetailPanel({ ghsaId }: { ghsaId: string }) {
   if (!data) return null
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 space-y-5">
+    <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-5">
       <div className="space-y-2">
         <div className="flex items-center gap-2 flex-wrap">
           <SeverityBadge severity={data.severity} />
@@ -118,12 +118,12 @@ function AdvisoryDetailPanel({ ghsaId }: { ghsaId: string }) {
             </span>
           )}
         </div>
-        <h2 className="font-display text-[20px] text-on-surface">{data.summary}</h2>
+        <h2 className="font-display text-[18px] lg:text-[20px] text-on-surface leading-snug">{data.summary}</h2>
         <p className="text-[12px] text-on-surface-variant font-numbers">{data.ghsaId}</p>
       </div>
 
       {data.description && (
-        <div className="prose-rag text-[13px]">
+        <div className="prose-rag text-[13px] max-w-none break-words">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.description}</ReactMarkdown>
         </div>
       )}
@@ -158,7 +158,7 @@ function AdvisoryDetailPanel({ ghsaId }: { ghsaId: string }) {
                   href={url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[12px] text-md-primary hover:opacity-80 transition-opacity truncate block"
+                  className="text-[12px] text-md-primary hover:opacity-80 transition-opacity break-all block"
                 >
                   {url}
                 </a>
