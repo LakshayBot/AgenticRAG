@@ -10,15 +10,6 @@ import { DataOverview } from '@/components/dashboard/DataOverview'
 import { OpenIncidents } from '@/components/dashboard/OpenIncidents'
 import { LiveFeed } from '@/components/dashboard/LiveFeed'
 
-function Skeleton({ className }: { className?: string }) {
-  return (
-    <div
-      className={`rounded-3xl animate-pulse ${className ?? ''}`}
-      style={{ background: 'var(--surface-container)' }}
-    />
-  )
-}
-
 export default function DashboardPage() {
   const { user } = useAuthStore()
   const isAdmin = user?.role === 'admin'
@@ -49,7 +40,7 @@ export default function DashboardPage() {
         {/* LEFT COLUMN */}
         <div className="w-full xl:w-64 flex flex-col md:flex-row xl:flex-col gap-6 relative z-10 shrink-0 xl:self-stretch">
           {loadingAdvisory ? (
-            <Skeleton className="h-64 flex-1" />
+            <div className="h-64 flex-1 rounded-3xl animate-skeleton" />
           ) : advisoryStats ? (
             <AlertsBlock stats={advisoryStats} />
           ) : (
@@ -65,7 +56,7 @@ export default function DashboardPage() {
         {/* CENTER COLUMN */}
         <div className="flex-1 flex flex-col gap-6 relative z-10 w-full min-w-0">
           {loadingAdvisory ? (
-            <Skeleton className="min-h-[500px] sm:min-h-[600px] flex-1" />
+            <div className="min-h-[500px] sm:min-h-[600px] flex-1 rounded-3xl animate-skeleton" />
           ) : advisoryStats ? (
             <DataOverview stats={advisoryStats} systemStats={systemStats} />
           ) : (
@@ -80,8 +71,8 @@ export default function DashboardPage() {
         <div className="w-full xl:w-64 flex flex-col md:flex-row xl:flex-col gap-6 relative z-10 shrink-0">
           {loadingAdvisory ? (
             <>
-              <Skeleton className="h-48 flex-1" />
-              <Skeleton className="h-52 flex-1" />
+              <div className="h-48 flex-1 rounded-3xl animate-skeleton" />
+              <div className="h-52 flex-1 rounded-3xl animate-skeleton" />
             </>
           ) : advisoryStats ? (
             <>
