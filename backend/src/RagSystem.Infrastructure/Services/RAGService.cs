@@ -207,7 +207,7 @@ public class RAGService : IRAGService
         {
             var chunkEvent = JsonSerializer.Serialize(new { chunk = word + " " });
             yield return chunkEvent;
-            await Task.Delay(8); // reduced from 30ms — LLM is the bottleneck, not streaming
+            await Task.Delay(1);
         }
 
         // Final event — full answer + done flag

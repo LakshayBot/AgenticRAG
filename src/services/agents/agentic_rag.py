@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langfuse.langchain import CallbackHandler
 from langgraph.graph import END, START, StateGraph
-from langgraph.checkpoint.memory import MemorySaver
+from .lru_memory import LRUMemorySaver
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from src.services.embeddings.jina_client import JinaEmbeddingsClient
@@ -63,7 +63,7 @@ class AgenticRAGService:
         self.embeddings = embeddings_client
         self.langfuse_tracer = langfuse_tracer
         self.graph_config = graph_config or GraphConfig()
-        self.memory = MemorySaver()
+        self.memory = LRUMemorySaver(max_threads=500)
 
         logger.info("Initializing AgenticRAGService with configuration:")
         logger.info(f"  Model: {self.graph_config.model}")
