@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import type { Advisory, AdvisorySummary } from '@/lib/types'
@@ -44,11 +45,13 @@ function AdvisoryCard({
   selected: boolean
   onClick: () => void
 }) {
+  const router = useRouter()
+
   return (
-    <button
+    <div
       onClick={onClick}
       className={cn(
-        'w-full text-left p-4 rounded-2xl transition-colors flex flex-col gap-1.5',
+        'w-full text-left p-4 rounded-2xl transition-colors flex flex-col gap-1.5 cursor-pointer',
         selected
           ? 'bg-md-primary/10 ring-1 ring-md-primary/30'
           : 'bg-surface-container-lowest hover:bg-surface-container'
@@ -65,8 +68,20 @@ function AdvisoryCard({
       <p className="text-[13px] font-medium text-on-surface leading-snug line-clamp-2">
         {adv.summary}
       </p>
-      <p className="text-[11px] text-on-surface-variant font-numbers">{adv.ghsaId}</p>
-    </button>
+      <div className="flex items-center gap-2">
+        <p className="text-[11px] text-on-surface-variant font-numbers">{adv.ghsaId}</p>
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            router.push(`/ask?sourceId=${adv.ghsaId}&title=${encodeURIComponent(adv.summary)}`)
+          }}
+          className="ml-auto flex items-center gap-1.5 text-[12px] text-md-primary hover:opacity-80 transition-opacity"
+        >
+          <span className="material-symbols-outlined text-[16px]">psychology</span>
+          Ask about this
+        </button>
+      </div>
+    </div>
   )
 }
 
