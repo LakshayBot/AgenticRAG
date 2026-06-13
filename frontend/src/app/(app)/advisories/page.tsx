@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import type { Advisory, AdvisorySummary } from '@/lib/types'
@@ -71,6 +72,7 @@ function AdvisoryCard({
 }
 
 function AdvisoryDetailPanel({ ghsaId }: { ghsaId: string }) {
+  const router = useRouter()
   const { data, isLoading } = useQuery({
     queryKey: ['advisory', ghsaId],
     queryFn: () => api.get<Advisory>(`/api/advisories/${ghsaId}`),
@@ -102,6 +104,13 @@ function AdvisoryDetailPanel({ ghsaId }: { ghsaId: string }) {
               CVSS {data.cvssScore.toFixed(1)}
             </span>
           )}
+          <button
+            onClick={() => router.push(`/ask?sourceId=${data.ghsaId}&title=${encodeURIComponent(data.summary)}`)}
+            className="ml-auto flex items-center gap-1.5 px-5 py-2 rounded-full bg-md-primary text-md-on-primary text-[13px] font-semibold hover:opacity-90 transition-opacity"
+          >
+            <span className="material-symbols-outlined text-[16px]">psychology</span>
+            Ask AI
+          </button>
         </div>
         <h2 className="font-display text-[20px] text-on-surface">{data.summary}</h2>
         <p className="text-[12px] text-on-surface-variant font-numbers">{data.ghsaId}</p>
