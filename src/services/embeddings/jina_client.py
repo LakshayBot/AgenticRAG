@@ -7,8 +7,9 @@ from src.schemas.embeddings.jina import JinaEmbeddingRequest, JinaEmbeddingRespo
 
 logger = logging.getLogger(__name__)
 
-_MAX_RETRIES = 5
-_RETRY_BASE_DELAY = 2.0  # seconds; doubles on each attempt
+_MAX_RETRIES = 2
+_RETRY_BASE_DELAY = 1.0  # seconds; doubles on each attempt, capped at 5s
+_MAX_RETRY_DELAY = 5.0
 
 
 async def _with_retry(coro_fn, max_retries: int = _MAX_RETRIES, base_delay: float = _RETRY_BASE_DELAY):
@@ -18,14 +19,12 @@ async def _with_retry(coro_fn, max_retries: int = _MAX_RETRIES, base_delay: floa
             return await coro_fn()
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 429 and attempt < max_retries:
-                # Honour Retry-After if present, otherwise use exponential backoff
                 retry_after = e.response.headers.get("Retry-After")
-                delay = float(retry_after) if retry_after else base_delay * (2**attempt)
+                delay = min(float(retry_after) if retry_after else base_delay * (2 ** attempt), _MAX_RETRY_DELAY)
                 logger.warning(f"Jina rate limit hit (429). Attempt {attempt + 1}/{max_retries}. Retrying in {delay:.1f}s...")
                 await asyncio.sleep(delay)
             else:
                 raise
-    # Should not be reached
     raise RuntimeError("Retry loop exhausted without raising")
 
 
@@ -48,7 +47,7 @@ class JinaEmbeddingsClient:
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
         }
-        self.client = httpx.AsyncClient(timeout=30.0)
+        self.client = httpx.AsyncClient(timeout=10.0)
         logger.info("Jina embeddings client initialized")
 
     async def embed_passages(self, texts: List[str], batch_size: int = 100) -> List[List[float]]:

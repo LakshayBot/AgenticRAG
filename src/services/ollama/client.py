@@ -21,6 +21,7 @@ class OllamaClient:
         self.timeout = httpx.Timeout(float(settings.ollama_timeout))
         self.prompt_builder = RAGPromptBuilder()
         self.response_parser = ResponseParser()
+        self._llm_cache: dict[tuple, ChatOllama] = {}
 
     async def health_check(self) -> Dict[str, Any]:
         """
@@ -80,8 +81,9 @@ class OllamaClient:
             raise OllamaException(f"Error listing models: {e}")
 
     def get_langchain_model(self, model: str, temperature: float = 0.7, **kwargs) -> ChatOllama:
-        """
-        Create a LangChain-compatible ChatOllama instance.
+        """Get or create a cached LangChain-compatible ChatOllama instance.
+
+        Caches instances by (model, temperature) key to reuse HTTP connections.
 
         Args:
             model: Model name to use
@@ -91,7 +93,10 @@ class OllamaClient:
         Returns:
             ChatOllama instance configured with the specified parameters
         """
-        return ChatOllama(base_url=self.base_url, model=model, temperature=temperature, **kwargs)
+        key = (model, temperature)
+        if key not in self._llm_cache:
+            self._llm_cache[key] = ChatOllama(base_url=self.base_url, model=model, temperature=temperature, **kwargs)
+        return self._llm_cache[key]
 
     async def generate(self, model: str, prompt: str, stream: bool = False, **kwargs) -> Optional[Dict[str, Any]]:
         """
