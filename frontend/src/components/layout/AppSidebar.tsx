@@ -44,7 +44,7 @@ function ChatHistoryList() {
   const pathname = usePathname()
   const { isAuthenticated } = useAuthStore()
   const queryClient = useQueryClient()
-  const { setOpenMobile, state } = useSidebar()
+  const { setOpenMobile, state, isMobile } = useSidebar()
 
   const [activeId, setActiveId] = useState<string | null>(null)
 
@@ -70,7 +70,7 @@ function ChatHistoryList() {
 
   if (!isAuthenticated) return null
 
-  const isCollapsed = state === 'collapsed'
+  const isCollapsed = !isMobile && state === 'collapsed'
   const items = conversations?.slice(0, 20) ?? []
 
   // --- Collapsed state: compact icon with count badge ---
@@ -360,7 +360,7 @@ export function AppSidebar() {
                 <span>{isDark ? 'Light' : 'Dark'} mode</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem>
+            <SidebarMenuItem className="max-lg:hidden">
               <SidebarMenuButton onClick={handleToggleClick} tooltip={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}>
                 {isExpanded ? <PanelLeftClose className="size-4" /> : <PanelLeft className="size-4" />}
                 <span>{isExpanded ? 'Collapse' : 'Expand'}</span>
